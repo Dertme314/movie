@@ -140,8 +140,8 @@ async function buildAllRows() {
     const main = document.getElementById('main-rows');
     main.innerHTML = '';
 
-    // Batch requests in groups of 5 to avoid TMDB rate-limiting (40 req/10s)
-    const BATCH_SIZE = 5;
+    // Batch requests in groups of 10 to stay under TMDB rate-limit (40 req/10s)
+    const BATCH_SIZE = 10;
     const allResults = [];
     for (let i = 0; i < ROWS.length; i += BATCH_SIZE) {
         const batch = ROWS.slice(i, i + BATCH_SIZE);
@@ -440,6 +440,15 @@ function playContent(item, season, episode) {
 
     // Kill any existing iframe first to avoid double-players
     destroyPlayerFrame();
+
+    // Auto-resume from saved progress if no explicit season/episode was passed
+    if (item.type === 'tv' && !season && !episode) {
+        const pr = getProgress(item.id, 'tv');
+        if (pr && pr.season && pr.episode) {
+            season = pr.season;
+            episode = pr.episode;
+        }
+    }
 
     const s = season || 1;
     const e = episode || 1;
