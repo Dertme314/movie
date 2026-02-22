@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidking</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <nav id="navbar">
+        <div class="nav-left">
+            <div class="logo" id="logo-btn">
+                <span class="logo-v">D</span>ERT
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <li class="nav-link active" data-page="home">Home</li>
+                <li class="nav-link" data-page="movies">Movies</li>
+                <li class="nav-link" data-page="tv">TV Shows</li>
+                <li class="nav-link" data-page="mylist">My List</li>
+            </ul>
+            <div class="mobile-menu-btn" id="mobile-menu-btn">
+                <span>Browse</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 10l5 5 5-5z" />
+                </svg>
+            </div>
+        </div>
+        <div class="nav-right">
+            <div class="search-wrapper" id="search-wrapper">
+                <button class="search-btn" id="search-btn" aria-label="Search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7" />
+                        <line x1="16.5" y1="16.5" x2="22" y2="22" />
+                    </svg>
+                </button>
+                <input type="text" id="search-input" placeholder="Titles, people, genres" spellcheck="false"
+                    autocomplete="off">
+                <button class="search-clear" id="search-clear">✕</button>
+                <div class="search-suggestions" id="search-suggestions"></div>
+            </div>
+            <button class="nav-icon-btn" aria-label="Notifications">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+            </button>
+            <div class="nav-avatar" id="nav-avatar">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Profile">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="avatar-caret">
+                    <path d="M7 10l5 5 5-5z" />
+                </svg>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Dropdown Menu -->
+    <div class="mobile-dropdown" id="mobile-dropdown">
+        <div class="mobile-dropdown-item active" data-page="home">Home</div>
+        <div class="mobile-dropdown-item" data-page="movies">Movies</div>
+        <div class="mobile-dropdown-item" data-page="tv">TV Shows</div>
+        <div class="mobile-dropdown-item" data-page="mylist">My List</div>
+    </div>
+
+    <!-- Hero Billboard -->
+    <header id="hero">
+        <div class="hero-vignette"></div>
+        <div class="hero-bottom-fade"></div>
+        <div class="hero-content">
+            <div class="hero-title-area">
+                <div class="hero-content-type" id="hero-badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4 4h16v16H4z" opacity=".3" />
+                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z" />
+                    </svg>
+                    <span id="hero-type-text">Movie</span>
+                </div>
+                <h1 class="hero-title" id="hero-title"></h1>
+            </div>
+            <div class="hero-metadata" id="hero-metadata"></div>
+            <p class="hero-overview" id="hero-overview"></p>
+            <div class="hero-actions">
+                <button class="btn-hero btn-white" id="hero-play-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 4l15 8-15 8z" />
+                    </svg>
+                    <span>Play</span>
+                </button>
+                <button class="btn-hero btn-gray" id="hero-info-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    <span>More Info</span>
+                </button>
+            </div>
+        </div>
+        <div class="hero-age-rating" id="hero-age">
+            <div class="age-divider"></div>
+            <span class="age-text">TV-MA</span>
+        </div>
+    </header>
+
+    <!-- Search Results -->
+    <section class="page-section search-page" id="search-page">
+        <div class="page-inner">
+            <h2 class="page-heading" id="search-heading">Search Results</h2>
+            <div class="card-grid" id="search-grid"></div>
+        </div>
+    </section>
+
+    <!-- My List Page -->
+    <section class="page-section mylist-page" id="mylist-page">
+        <div class="page-inner">
+            <h2 class="page-heading">My List</h2>
+            <div class="card-grid" id="mylist-grid"></div>
+            <div class="empty-state" id="mylist-empty">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1">
+                    <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z" />
+                </svg>
+                <h3>Your list is empty</h3>
+                <p>Add movies and shows that you want to watch later</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content Rows -->
+    <main id="main-rows"></main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-social">
+                <a href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z" />
+                    </svg></a>
+                <a href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z" />
+                    </svg></a>
+                <a href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" />
+                    </svg></a>
+                <a href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z" />
+                    </svg></a>
+            </div>
+            <div class="footer-links">
+                <a href="#">Audio Description</a>
+                <a href="#">Help Center</a>
+                <a href="#">Gift Cards</a>
+                <a href="#">Media Center</a>
+                <a href="#">Investor Relations</a>
+                <a href="#">Jobs</a>
+                <a href="#">Terms of Use</a>
+                <a href="#">Privacy</a>
+                <a href="#">Legal Notices</a>
+                <a href="#">Cookie Preferences</a>
+                <a href="#">Corporate Information</a>
+                <a href="#">Contact Us</a>
+            </div>
+            <button class="service-code-btn">Service Code</button>
+            <p class="footer-copy">© 2025 Dert · Powered by TMDB</p>
+        </div>
+    </footer>
+
+    <!-- DETAIL MODAL -->
+    <div class="detail-overlay" id="detail-overlay">
+        <div class="detail-modal" id="detail-modal">
+            <button class="modal-close" id="detail-close-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+            <div class="detail-hero" id="detail-hero">
+                <div class="detail-hero-fade"></div>
+                <div class="detail-hero-inner">
+                    <h1 class="detail-hero-title" id="detail-title"></h1>
+                    <div class="detail-hero-buttons">
+                        <button class="btn-hero btn-white" id="detail-play-btn">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 4l15 8-15 8z" />
+                            </svg>
+                            <span>Play</span>
+                        </button>
+                        <button class="circle-action" id="detail-list-btn" title="Add to My List">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        </button>
+                        <button class="circle-action" title="Rate">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-body">
+                <div class="detail-columns">
+                    <div class="detail-col-main">
+                        <div class="detail-meta" id="detail-meta"></div>
+                        <p class="detail-desc" id="detail-overview"></p>
+                    </div>
+                    <div class="detail-col-side">
+                        <p class="detail-tag" id="detail-cast-line"></p>
+                        <p class="detail-tag" id="detail-genre-line"></p>
+                    </div>
+                </div>
+                <div class="episodes-section" id="episodes-section">
+                    <div class="episodes-top">
+                        <h3>Episodes</h3>
+                        <select id="season-picker"></select>
+                    </div>
+                    <div class="ep-list" id="episodes-list"></div>
+                </div>
+                <div class="similar-section" id="similar-section">
+                    <h3>More Like This</h3>
+                    <div class="similar-grid" id="similar-grid"></div>
+                </div>
+                <div class="about-section" id="about-section">
+                    <h3>About <span id="about-title"></span></h3>
+                    <div id="about-details"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PLAYER -->
+    <div class="player-overlay" id="player-overlay">
+        <button class="player-back" id="player-back-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round">
+                <polyline points="15 18 9 12 15 6" />
+            </svg>
+            <span>Back to Browse</span>
+        </button>
+        <div class="player-frame-wrap">
+            <div id="player-frame"></div>
+        </div>
+    </div>
+
+    <!-- LOADER -->
+    <div class="loader-overlay" id="loader-screen">
+        <div class="loader-inner">
+            <div class="loader-logo"><span>D</span>ERT</div>
+            <div class="loader-bar">
+                <div class="loader-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
