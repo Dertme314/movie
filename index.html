@@ -169,7 +169,8 @@
                 <a href="#">Contact Us</a>
             </div>
             <button class="service-code-btn">Service Code</button>
-            <p class="footer-copy">© 2025 Dert · Powered by TMDB</p>
+            <p class="footer-copy">© <span id="footer-year">2025</span> Dert · Powered by TMDB</p>
+            <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
         </div>
     </footer>
 

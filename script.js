@@ -1,10 +1,22 @@
 /* ═══════════════════════════════════════
    CONFIG
    ═══════════════════════════════════════ */
-const API_KEY = '85134f05e0f15fe779e23cd56c1a08d5';
-const BASE = 'https://api.themoviedb.org/3';
 const IMG = 'https://image.tmdb.org/t/p';
 const VIDKING = 'https://www.vidking.net/embed';
+const VIDKING_ORIGIN = 'https://www.vidking.net';
+
+// Use Vercel serverless proxy in production, direct TMDB in local dev
+const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+const API_KEY = IS_LOCAL ? '85134f05e0f15fe779e23cd56c1a08d5' : null; // Only used locally
+const BASE = IS_LOCAL ? 'https://api.themoviedb.org/3' : '';
+
+/* HTML-escape to prevent XSS from API data */
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
 
 const ROWS = [
     { id: 'trending', title: 'Trending Now', endpoint: '/trending/all/week', mediaType: 'all', badge: 'top10' },
@@ -45,9 +57,17 @@ let ignoreProgress = false;   // blocks stale iframe events after close
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 async function tmdb(ep, extra = {}) {
-    const sep = ep.includes('?') ? '&' : '?';
-    let url = `${BASE}${ep}${sep}api_key=${API_KEY}&language=en-US`;
-    Object.entries(extra).forEach(([k, v]) => url += `&${k}=${encodeURIComponent(v)}`);
+    let url;
+    if (IS_LOCAL) {
+        // Direct TMDB for local development
+        const sep = ep.includes('?') ? '&' : '?';
+        url = `${BASE}${ep}${sep}api_key=${API_KEY}&language=en-US`;
+        Object.entries(extra).forEach(([k, v]) => url += `&${k}=${encodeURIComponent(v)}`);
+    } else {
+        // Vercel serverless proxy in production
+        const params = new URLSearchParams({ ep, ...extra });
+        url = `/api/tmdb?${params.toString()}`;
+    }
 
     // Check sessionStorage cache (skip for searches)
     const cacheKey = 'tmdb_' + ep + JSON.stringify(extra);
@@ -119,14 +139,21 @@ let trendingData = null; // reused by pickHero
 async function buildAllRows() {
     const main = document.getElementById('main-rows');
     main.innerHTML = '';
-    const tasks = ROWS.map(async cfg => {
-        const data = await tmdb(cfg.endpoint);
-        // Stash trending data so pickHero doesn't re-fetch
-        if (cfg.id === 'trending') trendingData = data;
-        return { cfg, items: (data.results || []).map(r => norm(r, cfg.mediaType)).filter(Boolean) };
-    });
-    const results = await Promise.allSettled(tasks);
-    results.forEach(r => {
+
+    // Batch requests in groups of 5 to avoid TMDB rate-limiting (40 req/10s)
+    const BATCH_SIZE = 5;
+    const allResults = [];
+    for (let i = 0; i < ROWS.length; i += BATCH_SIZE) {
+        const batch = ROWS.slice(i, i + BATCH_SIZE);
+        const tasks = batch.map(async cfg => {
+            const data = await tmdb(cfg.endpoint);
+            if (cfg.id === 'trending') trendingData = data;
+            return { cfg, items: (data.results || []).map(r => norm(r, cfg.mediaType)).filter(Boolean) };
+        });
+        const results = await Promise.allSettled(tasks);
+        allResults.push(...results);
+    }
+    allResults.forEach(r => {
         if (r.status !== 'fulfilled') return;
         const { cfg, items } = r.value;
         if (!items.length) return;
@@ -343,15 +370,15 @@ async function openDetail(item) {
             const sc = document.createElement('div');
             sc.className = 'sim-card';
             sc.innerHTML = `
-                <img class="sim-card-img" src="${si.backdrop || si.poster || ''}" alt="${si.title}" loading="lazy"
+                <img class="sim-card-img" src="${escapeHtml(si.backdrop || si.poster || '')}" alt="${escapeHtml(si.title)}" loading="lazy"
                      onerror="this.style.background='#333'">
                 <div class="sim-card-body">
                     <div class="sim-card-head">
                         ${si.rating ? `<span class="sim-match">${Math.round(si.rating * 10)}%</span>` : '<span></span>'}
-                        ${si.year ? `<span class="sim-year">${si.year}</span>` : ''}
+                        ${si.year ? `<span class="sim-year">${escapeHtml(si.year)}</span>` : ''}
                     </div>
-                    <div class="sim-card-title">${si.title}</div>
-                    <div class="sim-card-desc">${si.desc}</div>
+                    <div class="sim-card-title">${escapeHtml(si.title)}</div>
+                    <div class="sim-card-desc">${escapeHtml(si.desc)}</div>
                 </div>`;
             sc.onclick = () => { closeDetail(); setTimeout(() => openDetail(si), 350); };
             sg.appendChild(sc);
@@ -389,15 +416,15 @@ async function fetchEps(tvId, sNum) {
             return `
                 <div class="ep-card" onclick="playContent(detailCurrent,${sNum},${ep.episode_number})">
                     <div class="ep-index">${ep.episode_number}</div>
-                    <div class="ep-thumb" style="background-image:url(${still})">
+                    <div class="ep-thumb" style="background-image:url(${escapeHtml(still)})">
                         <div class="ep-play-overlay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
                     </div>
                     <div class="ep-info">
                         <div class="ep-info-top">
-                            <span class="ep-name">${ep.name || 'Episode ' + ep.episode_number}</span>
-                            <span class="ep-len">${rt}</span>
+                            <span class="ep-name">${escapeHtml(ep.name) || 'Episode ' + ep.episode_number}</span>
+                            <span class="ep-len">${escapeHtml(rt)}</span>
                         </div>
-                        <div class="ep-synopsis">${ep.overview || ''}</div>
+                        <div class="ep-synopsis">${escapeHtml(ep.overview || '')}</div>
                     </div>
                 </div>`;
         }).join('');
@@ -477,7 +504,7 @@ async function doSearch(q) {
     he.style.display = 'none'; mr.style.display = 'none'; ml.classList.remove('active');
     sp.classList.add('active');
 
-    document.getElementById('search-heading').innerHTML = `Search results for "<span>${q}</span>"`;
+    document.getElementById('search-heading').innerHTML = `Search results for "<span>${escapeHtml(q)}</span>"`;
     const grid = document.getElementById('search-grid');
     grid.innerHTML = '<div style="color:#808080;padding:40px;text-align:center">Searching…</div>';
 
@@ -499,18 +526,18 @@ async function fetchSuggestions(q) {
         const items = (data.results || []).map(r => norm(r)).filter(i => i && i.poster).slice(0, 6);
         if (!items.length) { box.classList.remove('active'); box.innerHTML = ''; return; }
         box.innerHTML = items.map(i => `
-            <div class="suggest-item" data-id="${i.id}" data-type="${i.type}">
-                <img class="suggest-poster" src="${i.poster}" alt="${i.title}" loading="lazy" onerror="this.style.background='#333'">
+            <div class="suggest-item" data-id="${escapeHtml(i.id)}" data-type="${escapeHtml(i.type)}">
+                <img class="suggest-poster" src="${escapeHtml(i.poster)}" alt="${escapeHtml(i.title)}" loading="lazy" onerror="this.style.background='#333'">
                 <div class="suggest-info">
-                    <div class="suggest-title">${i.title}</div>
+                    <div class="suggest-title">${escapeHtml(i.title)}</div>
                     <div class="suggest-meta">
                         <span class="sug-type">${i.type === 'tv' ? 'Series' : 'Movie'}</span>
-                        ${i.year ? ` · ${i.year}` : ''}
+                        ${i.year ? ` · ${escapeHtml(i.year)}` : ''}
                         ${i.rating ? ` · ${Math.round(i.rating * 10)}%` : ''}
                     </div>
                 </div>
             </div>
-        `).join('') + `<div class="suggest-footer" id="suggest-see-all">See all results for "${q}"</div>`;
+        `).join('') + `<div class="suggest-footer" id="suggest-see-all">See all results for "${escapeHtml(q)}"</div>`;
         box.querySelectorAll('.suggest-item').forEach((el, idx) => {
             el.onclick = () => { box.classList.remove('active'); box.innerHTML = ''; openDetail(items[idx]); };
         });
@@ -621,7 +648,17 @@ function navTo(page) {
    LISTENERS
    ═══════════════════════════════════════ */
 function wireListeners() {
-    window.addEventListener('scroll', () => document.getElementById('navbar').classList.toggle('solid', window.scrollY > 10));
+    // Throttled scroll handler via rAF
+    let scrollTicking = false;
+    window.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+            requestAnimationFrame(() => {
+                document.getElementById('navbar').classList.toggle('solid', window.scrollY > 10);
+                scrollTicking = false;
+            });
+            scrollTicking = true;
+        }
+    }, { passive: true });
 
     document.querySelectorAll('.nav-link').forEach(el => el.onclick = () => navTo(el.dataset.page));
     document.querySelectorAll('.mobile-dropdown-item').forEach(el => el.onclick = () => navTo(el.dataset.page));
@@ -660,9 +697,10 @@ function wireListeners() {
         else if (document.getElementById('detail-overlay').classList.contains('active')) closeDetail();
     };
 
-    // Vidking events
+    // Vidking events — validate origin to prevent spoofed messages
     window.addEventListener('message', ev => {
-        if (ignoreProgress) return;          // discard stale iframe events
+        if (ignoreProgress) return;
+        if (!IS_LOCAL && ev.origin !== VIDKING_ORIGIN) return;  // reject unknown origins
         try {
             const msg = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
             if (msg?.type === 'PLAYER_EVENT' && msg.data) saveProgress(msg.data);

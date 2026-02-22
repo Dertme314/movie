@@ -37,6 +37,19 @@ button {
     color: inherit;
 }
 
+/* Accessibility — visible focus outlines for keyboard users */
+:focus-visible {
+    outline: 2px solid rgba(229, 9, 20, .8);
+    outline-offset: 2px;
+}
+
+button:focus-visible,
+.card-circle:focus-visible,
+.circle-action:focus-visible {
+    outline: 2px solid rgba(229, 9, 20, .8);
+    outline-offset: 2px;
+}
+
 img {
     display: block;
     max-width: 100%;
@@ -541,7 +554,7 @@ nav.solid {
     font-weight: 900;
     line-height: 1.05;
     letter-spacing: -1px;
-    text-shadow: 0 4px 30px rgba(0, 0, 0, .6);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .9), 0 4px 30px rgba(0, 0, 0, .7);
 }
 
 .hero-metadata {
@@ -773,14 +786,15 @@ nav.solid {
     cursor: pointer;
     scroll-snap-align: start;
     background: #1a1a1a;
+    transform-origin: center center;
     transition: transform .35s cubic-bezier(.25, .8, .25, 1),
         box-shadow .35s ease,
         z-index 0s .35s;
 }
 
 .card:hover {
-    transform: scale(1.45);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, .85);
+    transform: scale(1.25);
+    box-shadow: 0 16px 50px rgba(0, 0, 0, .8);
     z-index: 30;
     transition: transform .35s cubic-bezier(.25, .8, .25, 1),
         box-shadow .35s ease,
