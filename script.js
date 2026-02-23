@@ -748,8 +748,168 @@ function wireSettingsActions() {
         const dd = document.getElementById('account-dropdown');
         dd.classList.remove('open');
         document.getElementById('nav-avatar').classList.remove('open');
-        showToast('Dert v1.0.0 Free movie streaming powered by TMDB & Vidking');
+        showToast('Dert v1.0.0 — Free movie streaming powered by TMDB & Vidking');
+    };
+
+    document.getElementById('settings-sync').onclick = e => {
+        e.stopPropagation();
+        document.getElementById('account-dropdown').classList.remove('open');
+        document.getElementById('nav-avatar').classList.remove('open');
+        openSyncModal();
     };
 }
+
+function openSyncModal() {
+    const ov = document.getElementById('sync-overlay');
+    document.getElementById('sync-export-code').value = '';
+    document.getElementById('sync-import-code').value = '';
+    document.getElementById('sync-export-status').textContent = '';
+    document.getElementById('sync-export-status').className = 'sync-status';
+    document.getElementById('sync-import-status').textContent = '';
+    document.getElementById('sync-import-status').className = 'sync-status';
+    document.getElementById('sync-qr-wrap').classList.remove('active');
+    switchSyncTab('export');
+    ov.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSyncModal() {
+    document.getElementById('sync-overlay').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function switchSyncTab(tab) {
+    document.querySelectorAll('.sync-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    document.getElementById('sync-export-panel').classList.toggle('hidden', tab !== 'export');
+    document.getElementById('sync-import-panel').classList.toggle('hidden', tab !== 'import');
+}
+
+function getSyncData() {
+    const data = {};
+    const prefixes = ['vk_hist', 'vk_mylist', 'vk_p_'];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (prefixes.some(p => key.startsWith(p))) {
+            try { data[key] = JSON.parse(localStorage.getItem(key)); } catch (_) { data[key] = localStorage.getItem(key); }
+        }
+    }
+    return data;
+}
+
+function generateSyncCode() {
+    const data = getSyncData();
+    const keys = Object.keys(data);
+    const status = document.getElementById('sync-export-status');
+    if (keys.length === 0) {
+        status.textContent = 'No data to export';
+        status.className = 'sync-status error';
+        return;
+    }
+    try {
+        const json = JSON.stringify({ v: 1, t: Date.now(), d: data });
+        const code = btoa(unescape(encodeURIComponent(json)));
+        document.getElementById('sync-export-code').value = code;
+        status.textContent = `Exported ${keys.length} item${keys.length > 1 ? 's' : ''} · ${new Date().toLocaleTimeString()}`;
+        status.className = 'sync-status success';
+    } catch (e) {
+        status.textContent = 'Failed to generate code';
+        status.className = 'sync-status error';
+    }
+}
+
+function copySyncCode() {
+    const code = document.getElementById('sync-export-code').value;
+    const status = document.getElementById('sync-export-status');
+    if (!code) {
+        status.textContent = 'Generate a code first';
+        status.className = 'sync-status error';
+        return;
+    }
+    navigator.clipboard.writeText(code).then(() => {
+        status.textContent = 'Copied to clipboard!';
+        status.className = 'sync-status success';
+    }).catch(() => {
+        document.getElementById('sync-export-code').select();
+        document.execCommand('copy');
+        status.textContent = 'Copied to clipboard!';
+        status.className = 'sync-status success';
+    });
+}
+
+function importSyncCode() {
+    const code = document.getElementById('sync-import-code').value.trim();
+    const status = document.getElementById('sync-import-status');
+    if (!code) {
+        status.textContent = 'Paste a sync code first';
+        status.className = 'sync-status error';
+        return;
+    }
+    try {
+        const json = decodeURIComponent(escape(atob(code)));
+        const parsed = JSON.parse(json);
+        if (!parsed.d || typeof parsed.d !== 'object') throw new Error('Invalid format');
+        let count = 0;
+        Object.entries(parsed.d).forEach(([key, val]) => {
+            if (key.startsWith('vk_')) {
+                localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+                count++;
+            }
+        });
+        const when = parsed.t ? new Date(parsed.t).toLocaleDateString() : 'unknown date';
+        status.textContent = `Imported ${count} item${count > 1 ? 's' : ''} from ${when}`;
+        status.className = 'sync-status success';
+        showToast('Data synced successfully!');
+        setTimeout(() => { closeSyncModal(); buildContinueRow(); }, 1500);
+    } catch (e) {
+        status.textContent = 'Invalid sync code — check and try again';
+        status.className = 'sync-status error';
+    }
+}
+
+function showSyncQR() {
+    const code = document.getElementById('sync-export-code').value;
+    const status = document.getElementById('sync-export-status');
+    const wrap = document.getElementById('sync-qr-wrap');
+    if (!code) {
+        status.textContent = 'Generate a code first';
+        status.className = 'sync-status error';
+        return;
+    }
+    if (wrap.classList.contains('active')) {
+        wrap.classList.remove('active');
+        return;
+    }
+    if (typeof QRious === 'undefined') {
+        status.textContent = 'QR library not loaded';
+        status.className = 'sync-status error';
+        return;
+    }
+    try {
+        const qr = new QRious({
+            element: document.getElementById('sync-qr-canvas'),
+            value: code,
+            size: 200,
+            level: 'L',
+            foreground: '#141414',
+            background: '#ffffff'
+        });
+        wrap.classList.add('active');
+        status.textContent = 'QR code generated scan with camera';
+        status.className = 'sync-status success';
+    } catch (e) {
+        status.textContent = 'Code too large for QR use copy/paste instead';
+        status.className = 'sync-status error';
+    }
+}
+
+(function wireSyncModal() {
+    document.getElementById('sync-close').onclick = closeSyncModal;
+    document.getElementById('sync-overlay').onclick = e => { if (e.target === e.currentTarget) closeSyncModal(); };
+    document.querySelectorAll('.sync-tab').forEach(t => t.onclick = () => switchSyncTab(t.dataset.tab));
+    document.getElementById('sync-generate').onclick = generateSyncCode;
+    document.getElementById('sync-copy').onclick = copySyncCode;
+    document.getElementById('sync-qr-btn').onclick = showSyncQR;
+    document.getElementById('sync-import-btn').onclick = importSyncCode;
+})();
 
 function hideLoader() { setTimeout(() => document.getElementById('loader-screen').classList.add('hidden'), 800); }
