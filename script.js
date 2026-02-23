@@ -654,12 +654,102 @@ function wireListeners() {
         } catch (_) { }
     });
 
+    const avatar = document.getElementById('nav-avatar');
+    const accDrop = document.getElementById('account-dropdown');
+    avatar.onclick = e => {
+        e.stopPropagation();
+        accDrop.classList.toggle('open');
+        avatar.classList.toggle('open');
+    };
+
+    wireSettingsActions();
+
     document.addEventListener('click', e => {
         const dd = document.getElementById('mobile-dropdown');
         const btn = document.getElementById('mobile-menu-btn');
         if (dd.classList.contains('open') && !dd.contains(e.target) && !btn.contains(e.target)) dd.classList.remove('open');
+        if (accDrop.classList.contains('open') && !avatar.contains(e.target)) {
+            accDrop.classList.remove('open');
+            avatar.classList.remove('open');
+            resetConfirmStates();
+        }
     });
 }
 
+function showToast(msg) {
+    const t = document.getElementById('account-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function resetConfirmStates() {
+    document.querySelectorAll('.account-item.confirm').forEach(el => {
+        el.classList.remove('confirm');
+        el.querySelector('span').textContent = el.dataset.label;
+    });
+}
+
+function settingsConfirm(btn, action) {
+    if (btn.classList.contains('confirm')) {
+        btn.classList.remove('confirm');
+        btn.classList.add('done');
+        action();
+        btn.querySelector('span').textContent = 'Done!';
+        setTimeout(() => {
+            btn.classList.remove('done');
+            btn.querySelector('span').textContent = btn.dataset.label;
+        }, 1500);
+        return;
+    }
+    resetConfirmStates();
+    btn.dataset.label = btn.dataset.label || btn.querySelector('span').textContent;
+    btn.classList.add('confirm');
+    btn.querySelector('span').textContent = 'Click again to confirm';
+}
+
+function wireSettingsActions() {
+    document.getElementById('settings-clear-history').onclick = e => {
+        e.stopPropagation();
+        settingsConfirm(e.currentTarget, () => {
+            localStorage.removeItem('vk_hist');
+            const old = document.querySelector('[data-rowid="continue"]');
+            if (old) old.remove();
+            showToast('Watch history cleared');
+        });
+    };
+
+    document.getElementById('settings-clear-progress').onclick = e => {
+        e.stopPropagation();
+        settingsConfirm(e.currentTarget, () => {
+            Object.keys(localStorage).filter(k => k.startsWith('vk_p_')).forEach(k => localStorage.removeItem(k));
+            showToast('All progress reset');
+        });
+    };
+
+    document.getElementById('settings-clear-list').onclick = e => {
+        e.stopPropagation();
+        settingsConfirm(e.currentTarget, () => {
+            localStorage.removeItem('vk_mylist');
+            showToast('My List cleared');
+        });
+    };
+
+    document.getElementById('settings-clear-cache').onclick = e => {
+        e.stopPropagation();
+        settingsConfirm(e.currentTarget, () => {
+            try { sessionStorage.clear(); } catch (_) { }
+            showToast('Cache cleared');
+        });
+    };
+
+    document.getElementById('settings-about').onclick = e => {
+        e.stopPropagation();
+        const dd = document.getElementById('account-dropdown');
+        dd.classList.remove('open');
+        document.getElementById('nav-avatar').classList.remove('open');
+        showToast('Dert v1.0.0 Free movie streaming powered by TMDB & Vidking');
+    };
+}
 
 function hideLoader() { setTimeout(() => document.getElementById('loader-screen').classList.add('hidden'), 800); }

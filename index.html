@@ -3,8 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#141414">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Dert</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
@@ -55,6 +59,59 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="avatar-caret">
                     <path d="M7 10l5 5 5-5z" />
                 </svg>
+                <div class="account-dropdown" id="account-dropdown">
+                    <div class="account-header">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Profile">
+                        <div class="account-info">
+                            <span class="account-name">Viewer</span>
+                            <span class="account-sub">Manage Profile</span>
+                        </div>
+                    </div>
+                    <div class="account-divider"></div>
+                    <button class="account-item" id="settings-clear-history">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <polyline points="1 4 1 10 7 10" />
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                        </svg>
+                        <span>Reset Watch History</span>
+                    </button>
+                    <button class="account-item" id="settings-clear-progress">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        <span>Reset Progress</span>
+                    </button>
+                    <button class="account-item" id="settings-clear-list">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span>Clear My List</span>
+                    </button>
+                    <button class="account-item" id="settings-clear-cache">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <path
+                                d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zM11.5 12.5L16 8" />
+                            <path d="M16 8l5-1-1 5" />
+                        </svg>
+                        <span>Clear Cache</span>
+                    </button>
+                    <div class="account-divider"></div>
+                    <button class="account-item" id="settings-about">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                        <span>About Dert</span>
+                    </button>
+                    <div class="account-version">v1.0.0 · Powered by TMDB</div>
+                </div>
             </div>
         </div>
     </nav>
@@ -247,6 +304,8 @@
             <div id="player-frame"></div>
         </div>
     </div>
+
+    <div class="account-toast" id="account-toast"></div>
 
     <div class="loader-overlay" id="loader-screen">
         <div class="loader-inner">
