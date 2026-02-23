@@ -1,16 +1,12 @@
-/* ═══════════════════════════════════════
-   CONFIG
-   ═══════════════════════════════════════ */
+
 const IMG = 'https://image.tmdb.org/t/p';
 const VIDKING = 'https://www.vidking.net/embed';
 const VIDKING_ORIGIN = 'https://www.vidking.net';
 
-// Use Vercel serverless proxy in production, direct TMDB in local dev
 const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
-const API_KEY = IS_LOCAL ? '85134f05e0f15fe779e23cd56c1a08d5' : null; // Only used locally
+const API_KEY = IS_LOCAL ? '85134f05e0f15fe779e23cd56c1a08d5' : null;
 const BASE = IS_LOCAL ? 'https://api.themoviedb.org/3' : '';
 
-/* HTML-escape to prevent XSS from API data */
 function escapeHtml(str) {
     if (!str) return '';
     const div = document.createElement('div');
@@ -20,7 +16,7 @@ function escapeHtml(str) {
 
 const ROWS = [
     { id: 'trending', title: 'Trending Now', endpoint: '/trending/all/week', mediaType: 'all', badge: 'top10' },
-    { id: 'popular-m', title: 'Popular on Vidking', endpoint: '/movie/popular', mediaType: 'movie' },
+    { id: 'popular-m', title: 'Popular on Dert', endpoint: '/movie/popular', mediaType: 'movie' },
     { id: 'now-play', title: 'Now Playing in Theaters', endpoint: '/movie/now_playing', mediaType: 'movie', badge: 'new' },
     { id: 'top-m', title: 'Top Rated Movies', endpoint: '/movie/top_rated', mediaType: 'movie' },
     { id: 'upcoming', title: 'Upcoming Movies', endpoint: '/movie/upcoming', mediaType: 'movie', badge: 'new' },
@@ -41,35 +37,28 @@ const ROWS = [
 
 const GENRE_MAP = {};
 
-/* ═══════════════════════════════════════
-   STATE
-   ═══════════════════════════════════════ */
+
 let currentPage = 'home';
 let heroItem = null;
 let detailCurrent = null;
 let searchDebounce = null;
 let suggestDebounce = null;
-let ignoreProgress = false;   // blocks stale iframe events after close
+let ignoreProgress = false;
 
-/* ═══════════════════════════════════════
-   TMDB
-   ═══════════════════════════════════════ */
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+const CACHE_TTL = 30 * 60 * 1000;
 
 async function tmdb(ep, extra = {}) {
     let url;
     if (IS_LOCAL) {
-        // Direct TMDB for local development
         const sep = ep.includes('?') ? '&' : '?';
         url = `${BASE}${ep}${sep}api_key=${API_KEY}&language=en-US`;
         Object.entries(extra).forEach(([k, v]) => url += `&${k}=${encodeURIComponent(v)}`);
     } else {
-        // Vercel serverless proxy in production
         const params = new URLSearchParams({ ep, ...extra });
         url = `/api/tmdb?${params.toString()}`;
     }
 
-    // Check sessionStorage cache (skip for searches)
     const cacheKey = 'tmdb_' + ep + JSON.stringify(extra);
     if (!Object.keys(extra).includes('query')) {
         try {
@@ -85,7 +74,6 @@ async function tmdb(ep, extra = {}) {
     if (!r.ok) throw new Error(`TMDB ${r.status}`);
     const data = await r.json();
 
-    // Cache the response
     if (!Object.keys(extra).includes('query')) {
         try { sessionStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() })); } catch (_) { }
     }
@@ -112,14 +100,12 @@ async function loadGenres() {
     try {
         const [m, t] = await Promise.all([tmdb('/genre/movie/list'), tmdb('/genre/tv/list')]);
         [...(m.genres || []), ...(t.genres || [])].forEach(g => GENRE_MAP[g.id] = g.name);
-    } catch (e) { /* ok */ }
+    } catch (e) { }
 }
 
 function genreNames(ids) { return (ids || []).map(i => GENRE_MAP[i]).filter(Boolean); }
 
-/* ═══════════════════════════════════════
-   BOOT
-   ═══════════════════════════════════════ */
+
 document.addEventListener('DOMContentLoaded', async () => {
     wireListeners();
     try {
@@ -131,16 +117,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     hideLoader();
 });
 
-/* ═══════════════════════════════════════
-   BUILD ROWS
-   ═══════════════════════════════════════ */
-let trendingData = null; // reused by pickHero
+
+let trendingData = null;
 
 async function buildAllRows() {
     const main = document.getElementById('main-rows');
     main.innerHTML = '';
 
-    // Batch requests in groups of 10 to stay under TMDB rate-limit (40 req/10s)
     const BATCH_SIZE = 10;
     const allResults = [];
     for (let i = 0; i < ROWS.length; i += BATCH_SIZE) {
@@ -183,9 +166,7 @@ function makeRow(cfg, items) {
     return sec;
 }
 
-/* ═══════════════════════════════════════
-   CARD
-   ═══════════════════════════════════════ */
+
 function makeCard(item, badgeType, idx) {
     const card = document.createElement('div');
     card.className = 'card';
@@ -200,7 +181,6 @@ function makeCard(item, badgeType, idx) {
         card.textContent = item.title;
     }
 
-    // Badge
     if (badgeType === 'top10' && idx < 10) {
         const b = document.createElement('div');
         b.className = 'top-badge'; b.textContent = `TOP ${idx + 1}`;
@@ -211,7 +191,6 @@ function makeCard(item, badgeType, idx) {
         card.appendChild(b);
     }
 
-    // Progress
     const prog = getProgress(item.id, item.type);
     if (prog && prog.progress > 2) {
         const bar = document.createElement('div'); bar.className = 'card-progress';
@@ -220,7 +199,6 @@ function makeCard(item, badgeType, idx) {
         bar.appendChild(fill); card.appendChild(bar);
     }
 
-    // Hover panel
     const genres = genreNames(item.genreIds).slice(0, 3).join(' · ');
     const panel = document.createElement('div');
     panel.className = 'card-panel';
@@ -242,11 +220,8 @@ function makeCard(item, badgeType, idx) {
     return card;
 }
 
-/* ═══════════════════════════════════════
-   HERO
-   ═══════════════════════════════════════ */
+
 function pickHero() {
-    // Reuse cached trending data from buildAllRows instead of a duplicate fetch
     const use = data => {
         const ok = (data.results || []).map(r => norm(r)).filter(i => i && i.backdrop && i.desc);
         if (!ok.length) return;
@@ -281,9 +256,7 @@ function renderHero() {
     document.getElementById('hero-info-btn').onclick = () => openDetail(heroItem);
 }
 
-/* ═══════════════════════════════════════
-   DETAIL
-   ═══════════════════════════════════════ */
+
 async function openDetail(item) {
     detailCurrent = item;
     const ov = document.getElementById('detail-overlay');
@@ -302,7 +275,6 @@ async function openDetail(item) {
     document.getElementById('detail-genre-line').innerHTML = genreNames(item.genreIds).length
         ? `<span>Genres:</span> ${genreNames(item.genreIds).join(', ')}` : '';
 
-    // Play
     const pb = document.getElementById('detail-play-btn');
     const pr = getProgress(item.id, item.type);
     if (pr && pr.season && pr.episode) {
@@ -337,7 +309,6 @@ async function openDetail(item) {
         const cast = (cred.cast || []).slice(0, 8);
         if (cast.length) document.getElementById('detail-cast-line').innerHTML = `<span>Cast:</span> ${cast.map(c => c.name).join(', ')}`;
 
-        // About
         const abt = document.getElementById('about-details');
         const rows = [];
         if (cast.length) rows.push(`<div class="about-row"><strong>Cast:</strong> ${cast.map(c => c.name).join(', ')}</div>`);
@@ -347,7 +318,6 @@ async function openDetail(item) {
         if (det.vote_average) rows.push(`<div class="about-row"><strong>Rating:</strong> ${det.vote_average.toFixed(1)}/10</div>`);
         abt.innerHTML = rows.join('');
 
-        // TV
         if (item.type === 'tv' && det.seasons) {
             const seasons = det.seasons.filter(s => s.season_number > 0);
             if (seasons.length) {
@@ -362,7 +332,6 @@ async function openDetail(item) {
             }
         }
 
-        // Similar
         const sims = (sim.results || []).slice(0, 9).map(r => norm(r, item.type)).filter(Boolean);
         const sg = document.getElementById('similar-grid');
         sg.innerHTML = '';
@@ -400,9 +369,7 @@ function syncListBtn(item) {
     btn.onclick = () => { toggleMyList(item); syncListBtn(item); };
 }
 
-/* ═══════════════════════════════════════
-   EPISODES
-   ═══════════════════════════════════════ */
+
 async function fetchEps(tvId, sNum) {
     const list = document.getElementById('episodes-list');
     list.innerHTML = '<div style="color:#808080;padding:20px;text-align:center">Loading episodes…</div>';
@@ -431,17 +398,13 @@ async function fetchEps(tvId, sNum) {
     } catch (e) { list.innerHTML = '<div style="color:#ff4444;padding:20px">Failed to load</div>'; }
 }
 
-/* ═══════════════════════════════════════
-   PLAYER
-   ═══════════════════════════════════════ */
+
 function playContent(item, season, episode) {
     if (!item) return;
     saveHistory(item);
 
-    // Kill any existing iframe first to avoid double-players
     destroyPlayerFrame();
 
-    // Auto-resume from saved progress if no explicit season/episode was passed
     if (item.type === 'tv' && !season && !episode) {
         const pr = getProgress(item.id, 'tv');
         if (pr && pr.season && pr.episode) {
@@ -462,10 +425,8 @@ function playContent(item, season, episode) {
 
     closeDetail();
 
-    // Un-mute progress tracking for the new session
     ignoreProgress = false;
 
-    // Small delay so the old iframe is fully torn down before the new one loads
     setTimeout(() => {
         const frame = document.getElementById('player-frame');
         frame.innerHTML = `<iframe src="${url}" allowfullscreen allow="autoplay;fullscreen;encrypted-media;picture-in-picture"></iframe>`;
@@ -475,7 +436,6 @@ function playContent(item, season, episode) {
     document.body.style.overflow = 'hidden';
 }
 
-/* Safely destroy the iframe so it stops all media & postMessage traffic */
 function destroyPlayerFrame() {
     const wrap = document.getElementById('player-frame');
     const iframe = wrap.querySelector('iframe');
@@ -488,7 +448,6 @@ function destroyPlayerFrame() {
 }
 
 function closePlayer() {
-    // Block any late-arriving progress events from the dying iframe
     ignoreProgress = true;
     destroyPlayerFrame();
     document.getElementById('player-overlay').classList.remove('active');
@@ -496,9 +455,7 @@ function closePlayer() {
     buildContinueRow();
 }
 
-/* ═══════════════════════════════════════
-   SEARCH
-   ═══════════════════════════════════════ */
+
 async function doSearch(q) {
     const sp = document.getElementById('search-page');
     const mr = document.getElementById('main-rows');
@@ -526,7 +483,7 @@ async function doSearch(q) {
     } catch (e) { grid.innerHTML = '<div style="color:#ff4444;padding:40px;text-align:center">Search failed</div>'; }
 }
 
-/* Search Suggestions */
+
 async function fetchSuggestions(q) {
     const box = document.getElementById('search-suggestions');
     if (!q || q.length < 2) { box.classList.remove('active'); box.innerHTML = ''; return; }
@@ -561,9 +518,7 @@ function hideSuggestions() {
     box.innerHTML = '';
 }
 
-/* ═══════════════════════════════════════
-   MY LIST
-   ═══════════════════════════════════════ */
+
 function getMyList() { return JSON.parse(localStorage.getItem('vk_mylist') || '[]'); }
 function isInMyList(id) { return getMyList().some(i => i.id === id); }
 function toggleMyList(item) {
@@ -580,9 +535,7 @@ function showMyList() {
     ls.forEach(i => g.appendChild(makeCard(i)));
 }
 
-/* ═══════════════════════════════════════
-   CONTINUE WATCHING
-   ═══════════════════════════════════════ */
+
 function saveHistory(item) {
     let h = JSON.parse(localStorage.getItem('vk_hist') || '[]');
     h = h.filter(x => x.id !== item.id);
@@ -599,9 +552,7 @@ function buildContinueRow() {
     main.insertBefore(makeRow({ id: 'continue', title: 'Continue Watching for You', mediaType: 'all' }, h), main.firstChild);
 }
 
-/* ═══════════════════════════════════════
-   PROGRESS
-   ═══════════════════════════════════════ */
+
 function saveProgress(data) {
     const payload = {
         id: String(data.id), mediaType: data.mediaType,
@@ -609,10 +560,8 @@ function saveProgress(data) {
         progress: data.progress || 0, season: data.season || null,
         episode: data.episode || null, updatedAt: Date.now()
     };
-    // Always save show-level key (for UI/Resume/Continue Watching)
     const showKey = `vk_p_${data.mediaType}_${data.id}`;
     localStorage.setItem(showKey, JSON.stringify(payload));
-    // For TV, also save episode-specific key (for player isolation)
     if (data.mediaType === 'tv' && data.season && data.episode) {
         const epKey = `vk_p_tv_${data.id}_s${data.season}_e${data.episode}`;
         localStorage.setItem(epKey, JSON.stringify(payload));
@@ -627,9 +576,7 @@ function getProgress(id, type, season, episode) {
     return r ? JSON.parse(r) : null;
 }
 
-/* ═══════════════════════════════════════
-   NAV
-   ═══════════════════════════════════════ */
+
 function navTo(page) {
     currentPage = page;
     document.querySelectorAll('.nav-link').forEach(el => el.classList.toggle('active', el.dataset.page === page));
@@ -653,11 +600,8 @@ function navTo(page) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ═══════════════════════════════════════
-   LISTENERS
-   ═══════════════════════════════════════ */
+
 function wireListeners() {
-    // Throttled scroll handler via rAF
     let scrollTicking = false;
     window.addEventListener('scroll', () => {
         if (!scrollTicking) {
@@ -673,10 +617,8 @@ function wireListeners() {
     document.querySelectorAll('.mobile-dropdown-item').forEach(el => el.onclick = () => navTo(el.dataset.page));
     document.getElementById('logo-btn').onclick = () => navTo('home');
 
-    // Mobile menu
     document.getElementById('mobile-menu-btn').onclick = () => document.getElementById('mobile-dropdown').classList.toggle('open');
 
-    // Search
     const sw = document.getElementById('search-wrapper'), si = document.getElementById('search-input');
     document.getElementById('search-btn').onclick = () => { sw.classList.toggle('open'); if (sw.classList.contains('open')) si.focus(); else { si.value = ''; doSearch(''); hideSuggestions(); } };
     document.getElementById('search-clear').onclick = () => { si.value = ''; doSearch(''); hideSuggestions(); si.focus(); };
@@ -692,31 +634,26 @@ function wireListeners() {
         if (e.key === 'Enter') { e.preventDefault(); clearTimeout(searchDebounce); clearTimeout(suggestDebounce); hideSuggestions(); doSearch(si.value); }
     };
 
-    // Detail
     document.getElementById('detail-close-btn').onclick = closeDetail;
     document.getElementById('detail-overlay').onclick = e => { if (e.target === e.currentTarget) closeDetail(); };
 
-    // Player
     document.getElementById('player-back-btn').onclick = closePlayer;
 
-    // Escape
     document.onkeydown = e => {
         if (e.key !== 'Escape') return;
         if (document.getElementById('player-overlay').classList.contains('active')) closePlayer();
         else if (document.getElementById('detail-overlay').classList.contains('active')) closeDetail();
     };
 
-    // Vidking events — validate origin to prevent spoofed messages
     window.addEventListener('message', ev => {
         if (ignoreProgress) return;
-        if (!IS_LOCAL && ev.origin !== VIDKING_ORIGIN) return;  // reject unknown origins
+
         try {
             const msg = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
             if (msg?.type === 'PLAYER_EVENT' && msg.data) saveProgress(msg.data);
         } catch (_) { }
     });
 
-    // Click outside mobile dropdown
     document.addEventListener('click', e => {
         const dd = document.getElementById('mobile-dropdown');
         const btn = document.getElementById('mobile-menu-btn');
@@ -724,7 +661,5 @@ function wireListeners() {
     });
 }
 
-/* ═══════════════════════════════════════
-   LOADER
-   ═══════════════════════════════════════ */
+
 function hideLoader() { setTimeout(() => document.getElementById('loader-screen').classList.add('hidden'), 800); }

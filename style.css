@@ -1,6 +1,3 @@
-/* ═══════════════════════════════════════
-   RESET & FOUNDATION
-   ═══════════════════════════════════════ */
 *,
 *::before,
 *::after {
@@ -37,7 +34,7 @@ button {
     color: inherit;
 }
 
-/* Accessibility — visible focus outlines for keyboard users */
+
 :focus-visible {
     outline: 2px solid rgba(229, 9, 20, .8);
     outline-offset: 2px;
@@ -74,9 +71,7 @@ img {
     color: #fff;
 }
 
-/* ═══════════════════════════════════════
-   LOADER
-   ═══════════════════════════════════════ */
+
 .loader-overlay {
     position: fixed;
     inset: 0;
@@ -151,9 +146,7 @@ img {
     }
 }
 
-/* ═══════════════════════════════════════
-   NAVBAR
-   ═══════════════════════════════════════ */
+
 nav {
     position: fixed;
     top: 0;
@@ -249,7 +242,7 @@ nav.solid {
     cursor: pointer;
 }
 
-/* Nav Right */
+
 .nav-right {
     display: flex;
     align-items: center;
@@ -269,7 +262,7 @@ nav.solid {
     opacity: 1;
 }
 
-/* Search */
+
 .search-wrapper {
     display: flex;
     align-items: center;
@@ -325,7 +318,7 @@ nav.solid {
     color: #fff;
 }
 
-/* Search Suggestions */
+
 .search-suggestions {
     position: absolute;
     top: 100%;
@@ -415,7 +408,7 @@ nav.solid {
     background: rgba(255, 255, 255, .06);
 }
 
-/* Avatar */
+
 .nav-avatar {
     display: flex;
     align-items: center;
@@ -443,7 +436,7 @@ nav.solid {
     transform: rotate(180deg);
 }
 
-/* Mobile Dropdown */
+
 .mobile-dropdown {
     display: none;
     position: fixed;
@@ -486,9 +479,7 @@ nav.solid {
     background: rgba(255, 255, 255, .08);
 }
 
-/* ═══════════════════════════════════════
-   HERO BILLBOARD
-   ═══════════════════════════════════════ */
+
 #hero {
     position: relative;
     width: 100%;
@@ -632,7 +623,7 @@ nav.solid {
     background: rgba(51, 51, 51, .5);
 }
 
-/* Hero Buttons */
+
 .btn-hero {
     display: inline-flex;
     align-items: center;
@@ -667,9 +658,7 @@ nav.solid {
     background: rgba(109, 109, 110, .4);
 }
 
-/* ═══════════════════════════════════════
-   CONTENT ROWS
-   ═══════════════════════════════════════ */
+
 #main-rows {
     position: relative;
     z-index: 2;
@@ -719,7 +708,7 @@ nav.solid {
     transform: translateX(4px);
 }
 
-/* Slider */
+
 .slider-wrap {
     position: relative;
 }
@@ -774,9 +763,7 @@ nav.solid {
     border-radius: 4px 0 0 4px;
 }
 
-/* ═══════════════════════════════════════
-   CARD
-   ═══════════════════════════════════════ */
+
 .card {
     position: relative;
     flex: 0 0 calc((100% - 20px) / 6);
@@ -822,7 +809,7 @@ nav.solid {
     color: #555;
 }
 
-/* Card Hover Panel */
+
 .card-panel {
     position: absolute;
     bottom: 0;
@@ -902,7 +889,7 @@ nav.solid {
     margin-top: 2px;
 }
 
-/* Card Progress */
+
 .card-progress {
     position: absolute;
     bottom: 0;
@@ -919,7 +906,7 @@ nav.solid {
     border-radius: 0 2px 0 0;
 }
 
-/* Top 10 Badge */
+
 .top-badge {
     position: absolute;
     top: 6px;
@@ -934,7 +921,7 @@ nav.solid {
     letter-spacing: .5px;
 }
 
-/* New Badge */
+
 .new-badge {
     position: absolute;
     top: 6px;
@@ -950,9 +937,7 @@ nav.solid {
     text-transform: uppercase;
 }
 
-/* ═══════════════════════════════════════
-   PAGES (Search, My List)
-   ═══════════════════════════════════════ */
+
 .page-section {
     display: none;
     padding: 100px 60px 80px;
@@ -1016,9 +1001,7 @@ nav.solid {
     font-size: .9rem;
 }
 
-/* ═══════════════════════════════════════
-   DETAIL MODAL
-   ═══════════════════════════════════════ */
+
 .detail-overlay {
     position: fixed;
     inset: 0;
@@ -1200,7 +1183,7 @@ nav.solid {
     color: #fff;
 }
 
-/* Episodes */
+
 .episodes-section {
     display: none;
     margin-bottom: 32px;
@@ -1350,7 +1333,7 @@ nav.solid {
     overflow: hidden;
 }
 
-/* Similar */
+
 .similar-section {
     margin-bottom: 28px;
 }
@@ -1425,7 +1408,7 @@ nav.solid {
     overflow: hidden;
 }
 
-/* About */
+
 .about-section {
     border-top: 1px solid #333;
     padding-top: 24px;
@@ -1455,9 +1438,7 @@ nav.solid {
     font-weight: 500;
 }
 
-/* ═══════════════════════════════════════
-   PLAYER
-   ═══════════════════════════════════════ */
+
 .player-overlay {
     position: fixed;
     inset: 0;
@@ -1516,9 +1497,7 @@ nav.solid {
     border: none;
 }
 
-/* ═══════════════════════════════════════
-   FOOTER
-   ═══════════════════════════════════════ */
+
 footer {
     position: relative;
     z-index: 2;
@@ -1580,9 +1559,7 @@ footer {
     color: #555;
 }
 
-/* ═══════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════ */
+
 @media(max-width:1400px) {
     .card {
         flex: 0 0 calc((100% - 20px) / 5);
