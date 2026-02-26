@@ -105,17 +105,48 @@ async function loadGenres() {
 
 function genreNames(ids) { return (ids || []).map(i => GENRE_MAP[i]).filter(Boolean); }
 
-
 document.addEventListener('DOMContentLoaded', async () => {
     wireListeners();
+    const hash = window.location.hash.slice(1);
+    if (['movies', 'tv', 'mylist'].includes(hash)) {
+        currentPage = hash;
+    } else if (hash.startsWith('movie/') || hash.startsWith('tv/')) {
+        // We handle detail view opening after rows load so it doesn't block the UI
+        const [type, id] = hash.split('/');
+        setTimeout(() => loadDetailFromUrl(type, id), 500);
+    }
+
     try {
         await loadGenres();
         await buildAllRows();
         pickHero();
         buildContinueRow();
+        if (currentPage !== 'home') navTo(currentPage, false);
     } catch (e) { console.error('Boot', e); }
     hideLoader();
 });
+
+async function loadDetailFromUrl(type, id) {
+    try {
+        const itemData = await tmdb(`/${type}/${id}`);
+        const item = {
+            id: String(itemData.id),
+            title: itemData.title || itemData.name || '',
+            type: type,
+            media_type: type,
+            poster_path: itemData.poster_path,
+            backdrop_path: itemData.backdrop_path,
+            overview: itemData.overview,
+            vote_average: itemData.vote_average,
+            release_date: itemData.release_date,
+            first_air_date: itemData.first_air_date,
+            genre_ids: (itemData.genres || []).map(g => g.id)
+        };
+        openDetail(norm(item, type), false);
+    } catch (e) {
+        console.error('Failed to load item from URL', e);
+    }
+}
 
 
 let trendingData = null;
@@ -257,8 +288,14 @@ function renderHero() {
 }
 
 
-async function openDetail(item) {
+async function openDetail(item, updateUrl = true) {
+    if (!item) return;
     detailCurrent = item;
+
+    if (updateUrl) {
+        history.pushState({ isDetail: true, type: item.type, id: item.id }, '', `#${item.type}/${item.id}`);
+    }
+
     const ov = document.getElementById('detail-overlay');
 
     document.getElementById('detail-hero').style.backgroundImage = item.backdrop ? `url(${item.backdrop})` : 'none';
@@ -355,10 +392,18 @@ async function openDetail(item) {
     } catch (e) { console.warn('Detail', e); }
 }
 
-function closeDetail() {
+function closeDetail(updateUrl = true) {
     document.getElementById('detail-overlay').classList.remove('active');
     document.body.style.overflow = '';
     detailCurrent = null;
+
+    if (updateUrl) {
+        if (currentPage === 'home') {
+            history.pushState(null, '', window.location.pathname + window.location.search);
+        } else {
+            history.pushState(null, '', '#' + currentPage);
+        }
+    }
 }
 
 function syncListBtn(item) {
@@ -577,8 +622,15 @@ function getProgress(id, type, season, episode) {
 }
 
 
-function navTo(page) {
+function navTo(page, updateUrl = true) {
     currentPage = page;
+    if (updateUrl) {
+        if (page === 'home') {
+            history.pushState(null, '', window.location.pathname + window.location.search);
+        } else {
+            history.pushState(null, '', '#' + page);
+        }
+    }
     document.querySelectorAll('.nav-link').forEach(el => el.classList.toggle('active', el.dataset.page === page));
     document.querySelectorAll('.mobile-dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
     document.getElementById('mobile-dropdown').classList.remove('open');
@@ -616,6 +668,22 @@ function wireListeners() {
     document.querySelectorAll('.nav-link').forEach(el => el.onclick = () => navTo(el.dataset.page));
     document.querySelectorAll('.mobile-dropdown-item').forEach(el => el.onclick = () => navTo(el.dataset.page));
     document.getElementById('logo-btn').onclick = () => navTo('home');
+
+    window.addEventListener('popstate', (e) => {
+        const hash = window.location.hash.slice(1) || 'home';
+
+        if (hash.startsWith('movie/') || hash.startsWith('tv/')) {
+            const [type, id] = hash.split('/');
+            loadDetailFromUrl(type, id);
+        } else {
+            if (document.getElementById('detail-overlay').classList.contains('active')) {
+                closeDetail(false);
+            }
+            if (['home', 'movies', 'tv', 'mylist'].includes(hash) && currentPage !== hash) {
+                navTo(hash, false);
+            }
+        }
+    });
 
     document.getElementById('mobile-menu-btn').onclick = () => document.getElementById('mobile-dropdown').classList.toggle('open');
 
