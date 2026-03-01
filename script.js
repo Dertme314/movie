@@ -23,16 +23,16 @@ const ROWS = [
     { id: 'popular-t', title: 'Popular TV Shows', endpoint: '/tv/popular', mediaType: 'tv' },
     { id: 'top-t', title: 'Top Rated TV Shows', endpoint: '/tv/top_rated', mediaType: 'tv' },
     { id: 'airing', title: 'Currently Airing', endpoint: '/tv/on_the_air', mediaType: 'tv', badge: 'new' },
-    { id: 'action', title: 'Action & Adventure', endpoint: '/discover/movie?with_genres=28', mediaType: 'movie' },
-    { id: 'comedy', title: 'Comedies', endpoint: '/discover/movie?with_genres=35', mediaType: 'movie' },
-    { id: 'horror', title: 'Horror', endpoint: '/discover/movie?with_genres=27', mediaType: 'movie' },
-    { id: 'scifi', title: 'Sci-Fi', endpoint: '/discover/movie?with_genres=878', mediaType: 'movie' },
-    { id: 'romance', title: 'Romantic Movies', endpoint: '/discover/movie?with_genres=10749', mediaType: 'movie' },
-    { id: 'thriller', title: 'Thrillers', endpoint: '/discover/movie?with_genres=53', mediaType: 'movie' },
-    { id: 'docs', title: 'Documentaries', endpoint: '/discover/movie?with_genres=99', mediaType: 'movie' },
-    { id: 'animation', title: 'Animation', endpoint: '/discover/movie?with_genres=16', mediaType: 'movie' },
-    { id: 'anime-tv', title: 'Anime Series', endpoint: '/discover/tv?with_genres=16', mediaType: 'tv' },
-    { id: 'crime-tv', title: 'Crime TV Shows', endpoint: '/discover/tv?with_genres=80', mediaType: 'tv' },
+    { id: 'action', title: 'Action & Adventure', endpoint: '/discover/movie?with_genres=28&sort_by=popularity.desc&vote_count.gte=100', mediaType: 'movie' },
+    { id: 'comedy', title: 'Comedies', endpoint: '/discover/movie?with_genres=35&sort_by=popularity.desc&vote_count.gte=100', mediaType: 'movie' },
+    { id: 'horror', title: 'Horror', endpoint: '/discover/movie?with_genres=27&sort_by=popularity.desc&vote_count.gte=50', mediaType: 'movie' },
+    { id: 'scifi', title: 'Sci-Fi', endpoint: '/discover/movie?with_genres=878&sort_by=popularity.desc&vote_count.gte=100', mediaType: 'movie' },
+    { id: 'romance', title: 'Romantic Movies', endpoint: '/discover/movie?with_genres=10749&sort_by=popularity.desc&vote_count.gte=50', mediaType: 'movie' },
+    { id: 'thriller', title: 'Thrillers', endpoint: '/discover/movie?with_genres=53&sort_by=popularity.desc&vote_count.gte=100', mediaType: 'movie' },
+    { id: 'docs', title: 'Documentaries', endpoint: '/discover/movie?with_genres=99&sort_by=popularity.desc&vote_count.gte=20', mediaType: 'movie' },
+    { id: 'animation', title: 'Animation', endpoint: '/discover/movie?with_genres=16&sort_by=popularity.desc&vote_count.gte=50', mediaType: 'movie' },
+    { id: 'anime-tv', title: 'Anime Series', endpoint: '/discover/tv?with_genres=16&sort_by=popularity.desc&vote_count.gte=20', mediaType: 'tv' },
+    { id: 'crime-tv', title: 'Crime TV Shows', endpoint: '/discover/tv?with_genres=80&sort_by=popularity.desc&vote_count.gte=50', mediaType: 'tv' },
 ];
 
 const GENRE_MAP = {};
@@ -155,12 +155,19 @@ async function buildAllRows() {
     const main = document.getElementById('main-rows');
     main.innerHTML = '';
 
+    const seenIds = new Set();
+
     const BATCH_SIZE = 10;
     const allResults = [];
     for (let i = 0; i < ROWS.length; i += BATCH_SIZE) {
         const batch = ROWS.slice(i, i + BATCH_SIZE);
         const tasks = batch.map(async cfg => {
-            const data = await tmdb(cfg.endpoint);
+            let ep = cfg.endpoint;
+            if (ep.includes('/discover/')) {
+                const page = Math.floor(Math.random() * 3) + 1;
+                ep += `&page=${page}`;
+            }
+            const data = await tmdb(ep);
             if (cfg.id === 'trending') trendingData = data;
             return { cfg, items: (data.results || []).map(r => norm(r, cfg.mediaType)).filter(Boolean) };
         });
@@ -170,8 +177,13 @@ async function buildAllRows() {
     allResults.forEach(r => {
         if (r.status !== 'fulfilled') return;
         const { cfg, items } = r.value;
-        if (!items.length) return;
-        main.appendChild(makeRow(cfg, items));
+        const unique = items.filter(item => {
+            if (seenIds.has(item.id)) return false;
+            seenIds.add(item.id);
+            return true;
+        });
+        if (!unique.length) return;
+        main.appendChild(makeRow(cfg, unique));
     });
 }
 
@@ -654,6 +666,15 @@ function navTo(page, updateUrl = true) {
 
 
 function wireListeners() {
+    function setVh() {
+        const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
+        document.documentElement.style.setProperty('--vh', vh + 'px');
+    }
+    setVh();
+    window.addEventListener('resize', setVh, { passive: true });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', setVh, { passive: true });
+    window.addEventListener('orientationchange', () => setTimeout(setVh, 150));
+
     let scrollTicking = false;
     window.addEventListener('scroll', () => {
         if (!scrollTicking) {
@@ -827,15 +848,21 @@ function wireSettingsActions() {
     };
 }
 
+let syncTimerInterval = null;
+
 function openSyncModal() {
     const ov = document.getElementById('sync-overlay');
-    document.getElementById('sync-export-code').value = '';
+    document.getElementById('sync-pin-display').textContent = '------';
+    document.getElementById('sync-pin-display').classList.remove('active');
+    document.getElementById('sync-pin-timer').textContent = '';
     document.getElementById('sync-import-code').value = '';
     document.getElementById('sync-export-status').textContent = '';
     document.getElementById('sync-export-status').className = 'sync-status';
     document.getElementById('sync-import-status').textContent = '';
     document.getElementById('sync-import-status').className = 'sync-status';
-    document.getElementById('sync-qr-wrap').classList.remove('active');
+    document.getElementById('sync-generate').disabled = false;
+    document.getElementById('sync-generate').textContent = 'Generate PIN';
+    if (syncTimerInterval) { clearInterval(syncTimerInterval); syncTimerInterval = null; }
     switchSyncTab('export');
     ov.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -844,6 +871,7 @@ function openSyncModal() {
 function closeSyncModal() {
     document.getElementById('sync-overlay').classList.remove('active');
     document.body.style.overflow = '';
+    if (syncTimerInterval) { clearInterval(syncTimerInterval); syncTimerInterval = null; }
 }
 
 function switchSyncTab(tab) {
@@ -864,58 +892,104 @@ function getSyncData() {
     return data;
 }
 
-function generateSyncCode() {
+async function generateSyncCode() {
+    const status = document.getElementById('sync-export-status');
+    const pinDisplay = document.getElementById('sync-pin-display');
+    const timerEl = document.getElementById('sync-pin-timer');
+    const btn = document.getElementById('sync-generate');
+
+    if (IS_LOCAL) {
+        status.textContent = 'Cloud sync requires deployment to Vercel';
+        status.className = 'sync-status error';
+        return;
+    }
+
     const data = getSyncData();
     const keys = Object.keys(data);
-    const status = document.getElementById('sync-export-status');
     if (keys.length === 0) {
         status.textContent = 'No data to export';
         status.className = 'sync-status error';
         return;
     }
+
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+    status.textContent = '';
+    status.className = 'sync-status';
+
     try {
-        const json = JSON.stringify({ v: 1, t: Date.now(), d: data });
-        const code = btoa(unescape(encodeURIComponent(json)));
-        document.getElementById('sync-export-code').value = code;
-        status.textContent = `Exported ${keys.length} item${keys.length > 1 ? 's' : ''} · ${new Date().toLocaleTimeString()}`;
+        const payload = JSON.stringify({ v: 1, t: Date.now(), d: data });
+        const r = await fetch('/api/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: payload })
+        });
+        const result = await r.json();
+        if (!r.ok) throw new Error(result.error || 'Upload failed');
+
+        pinDisplay.textContent = result.pin;
+        pinDisplay.classList.add('active');
+        status.textContent = `${keys.length} item${keys.length > 1 ? 's' : ''} ready to sync`;
         status.className = 'sync-status success';
+        btn.textContent = 'Generate New PIN';
+        btn.disabled = false;
+
+        if (syncTimerInterval) clearInterval(syncTimerInterval);
+        let remaining = 600;
+        timerEl.textContent = 'Expires in 10:00';
+        syncTimerInterval = setInterval(() => {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(syncTimerInterval);
+                syncTimerInterval = null;
+                timerEl.textContent = 'PIN expired';
+                pinDisplay.textContent = '------';
+                pinDisplay.classList.remove('active');
+                status.textContent = 'PIN expired — generate a new one';
+                status.className = 'sync-status error';
+                return;
+            }
+            const m = Math.floor(remaining / 60);
+            const s = String(remaining % 60).padStart(2, '0');
+            timerEl.textContent = `Expires in ${m}:${s}`;
+        }, 1000);
     } catch (e) {
-        status.textContent = 'Failed to generate code';
+        status.textContent = e.message || 'Failed to upload sync data';
         status.className = 'sync-status error';
+        btn.textContent = 'Generate PIN';
+        btn.disabled = false;
     }
 }
 
-function copySyncCode() {
-    const code = document.getElementById('sync-export-code').value;
-    const status = document.getElementById('sync-export-status');
-    if (!code) {
-        status.textContent = 'Generate a code first';
-        status.className = 'sync-status error';
-        return;
-    }
-    navigator.clipboard.writeText(code).then(() => {
-        status.textContent = 'Copied to clipboard!';
-        status.className = 'sync-status success';
-    }).catch(() => {
-        document.getElementById('sync-export-code').select();
-        document.execCommand('copy');
-        status.textContent = 'Copied to clipboard!';
-        status.className = 'sync-status success';
-    });
-}
-
-function importSyncCode() {
+async function importSyncCode() {
     const code = document.getElementById('sync-import-code').value.trim();
     const status = document.getElementById('sync-import-status');
-    if (!code) {
-        status.textContent = 'Paste a sync code first';
+    const btn = document.getElementById('sync-import-btn');
+
+    if (IS_LOCAL) {
+        status.textContent = 'Cloud sync requires deployment to Vercel';
         status.className = 'sync-status error';
         return;
     }
+
+    if (!code || !/^\d{6}$/.test(code)) {
+        status.textContent = 'Enter a 6-digit PIN';
+        status.className = 'sync-status error';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Syncing...';
+    status.textContent = '';
+
     try {
-        const json = decodeURIComponent(escape(atob(code)));
-        const parsed = JSON.parse(json);
-        if (!parsed.d || typeof parsed.d !== 'object') throw new Error('Invalid format');
+        const r = await fetch(`/api/sync?code=${code}`);
+        const result = await r.json();
+        if (!r.ok) throw new Error(result.error || 'Sync failed');
+
+        const parsed = JSON.parse(result.data);
+        if (!parsed.d || typeof parsed.d !== 'object') throw new Error('Invalid data');
+
         let count = 0;
         Object.entries(parsed.d).forEach(([key, val]) => {
             if (key.startsWith('vk_')) {
@@ -923,50 +997,20 @@ function importSyncCode() {
                 count++;
             }
         });
-        const when = parsed.t ? new Date(parsed.t).toLocaleDateString() : 'unknown date';
-        status.textContent = `Imported ${count} item${count > 1 ? 's' : ''} from ${when}`;
+
+        status.textContent = `Synced ${count} item${count > 1 ? 's' : ''} successfully!`;
         status.className = 'sync-status success';
         showToast('Data synced successfully!');
         setTimeout(() => { closeSyncModal(); buildContinueRow(); }, 1500);
     } catch (e) {
-        status.textContent = 'Invalid sync code — check and try again';
+        const msg = e.message === 'Code not found or expired'
+            ? 'PIN not found or expired — try again'
+            : (e.message || 'Sync failed');
+        status.textContent = msg;
         status.className = 'sync-status error';
-    }
-}
-
-function showSyncQR() {
-    const code = document.getElementById('sync-export-code').value;
-    const status = document.getElementById('sync-export-status');
-    const wrap = document.getElementById('sync-qr-wrap');
-    if (!code) {
-        status.textContent = 'Generate a code first';
-        status.className = 'sync-status error';
-        return;
-    }
-    if (wrap.classList.contains('active')) {
-        wrap.classList.remove('active');
-        return;
-    }
-    if (typeof QRious === 'undefined') {
-        status.textContent = 'QR library not loaded';
-        status.className = 'sync-status error';
-        return;
-    }
-    try {
-        const qr = new QRious({
-            element: document.getElementById('sync-qr-canvas'),
-            value: code,
-            size: 200,
-            level: 'L',
-            foreground: '#141414',
-            background: '#ffffff'
-        });
-        wrap.classList.add('active');
-        status.textContent = 'QR code generated scan with camera';
-        status.className = 'sync-status success';
-    } catch (e) {
-        status.textContent = 'Code too large for QR use copy/paste instead';
-        status.className = 'sync-status error';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sync';
     }
 }
 
@@ -975,9 +1019,9 @@ function showSyncQR() {
     document.getElementById('sync-overlay').onclick = e => { if (e.target === e.currentTarget) closeSyncModal(); };
     document.querySelectorAll('.sync-tab').forEach(t => t.onclick = () => switchSyncTab(t.dataset.tab));
     document.getElementById('sync-generate').onclick = generateSyncCode;
-    document.getElementById('sync-copy').onclick = copySyncCode;
-    document.getElementById('sync-qr-btn').onclick = showSyncQR;
     document.getElementById('sync-import-btn').onclick = importSyncCode;
+    const codeInput = document.getElementById('sync-import-code');
+    codeInput.oninput = () => { codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6); };
 })();
 
 function hideLoader() { setTimeout(() => document.getElementById('loader-screen').classList.add('hidden'), 800); }
