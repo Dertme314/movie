@@ -247,9 +247,9 @@ function makeCard(item, badgeType, idx) {
     panel.className = 'card-panel';
     panel.innerHTML = `
         <div class="card-btns">
-            <button class="card-circle play-c" data-do="play" title="Play">▶</button>
-            <button class="card-circle" data-do="list" title="My List">+</button>
-            <button class="card-circle card-info-btn" data-do="info" title="More Info">⌄</button>
+            <button class="card-circle play-c" data-do="play" title="Play" aria-label="Play">▶</button>
+            <button class="card-circle" data-do="list" title="My List" aria-label="My List">+</button>
+            <button class="card-circle card-info-btn" data-do="info" title="More Info" aria-label="More Info">⌄</button>
         </div>
         ${item.rating ? `<div class="card-match">${Math.round(item.rating * 10)}% Match</div>` : ''}
         <div class="card-name">${item.title}</div>
