@@ -43,6 +43,11 @@ let heroItem = null;
 let detailCurrent = null;
 let searchDebounce = null;
 let suggestDebounce = null;
+let filterCurrent = null;
+let lastSearchQuery = '';
+let searchPage = 1;
+let filterPage = 1;
+let isFetchingMore = false;
 let ignoreProgress = false;
 
 
@@ -100,7 +105,36 @@ async function loadGenres() {
     try {
         const [m, t] = await Promise.all([tmdb('/genre/movie/list'), tmdb('/genre/tv/list')]);
         [...(m.genres || []), ...(t.genres || [])].forEach(g => GENRE_MAP[g.id] = g.name);
+        buildFilterMenu();
     } catch (e) { }
+}
+
+function buildFilterMenu() {
+    const box = document.getElementById('filter-dropdown');
+    const genres = Object.entries(GENRE_MAP).sort((a,b) => a[1].localeCompare(b[1]));
+    const uniqueGenres = [];
+    const seenNames = new Set();
+    genres.forEach(([id, name]) => {
+        if (name === 'Western' || name === 'Westerns') return; // Skip Western
+        if (!seenNames.has(name)) {
+            seenNames.add(name);
+            uniqueGenres.push({id, name});
+        }
+    });
+
+    if (!seenNames.has('Anime')) {
+        uniqueGenres.push({id: '16', name: 'Anime'});
+    }
+
+    box.innerHTML = uniqueGenres.map(g => `<div class="filter-item" data-id="${g.id}">${g.name}</div>`).join('');
+    box.querySelectorAll('.filter-item').forEach(el => {
+        el.onclick = () => {
+            const id = el.dataset.id;
+            const name = el.textContent;
+            applyFilter(id, name);
+            box.classList.remove('open');
+        };
+    });
 }
 
 function genreNames(ids) { return (ids || []).map(i => GENRE_MAP[i]).filter(Boolean); }
@@ -121,10 +155,62 @@ document.addEventListener('DOMContentLoaded', async () => {
         await buildAllRows();
         pickHero();
         buildContinueRow();
+        setupInfiniteScroll();
         if (currentPage !== 'home') navTo(currentPage, false);
+        hideLoader();
     } catch (e) { console.error('Boot', e); }
-    hideLoader();
 });
+
+function setupInfiniteScroll() {
+    const sentinel = document.getElementById('infinite-scroll-sentinel');
+    const observer = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && !isFetchingMore) {
+            loadNextPage();
+        }
+    }, { rootMargin: '400px' });
+    observer.observe(sentinel);
+}
+
+async function loadNextPage() {
+    const sp = document.getElementById('search-page');
+    if (!sp.classList.contains('active')) return;
+
+    isFetchingMore = true;
+    const loader = document.getElementById('search-loading');
+    loader.classList.add('active');
+
+    try {
+        let results = [];
+        if (filterCurrent) {
+            filterPage++;
+            const params = { with_genres: filterCurrent.id, page: filterPage };
+            if (filterCurrent.name === 'Anime') params.with_original_language = 'ja';
+            const [m, t] = await Promise.all([tmdb('/discover/movie', params), tmdb('/discover/tv', params)]);
+            results = [...(m.results || []).map(r => norm(r, 'movie')), ...(t.results || []).map(r => norm(r, 'tv'))];
+        } else if (lastSearchQuery) {
+            searchPage++;
+            const [m, t] = await Promise.all([
+                tmdb('/search/movie', { query: lastSearchQuery, page: searchPage }),
+                tmdb('/search/tv', { query: lastSearchQuery, page: searchPage })
+            ]);
+            results = [...(m.results || []).map(r => norm(r, 'movie')), ...(t.results || []).map(r => norm(r, 'tv'))];
+        }
+
+        const items = results.filter(i => i && i.poster).sort((a,b) => (b.rating || 0) - (a.rating || 0));
+        const grid = document.getElementById('search-grid');
+        items.forEach(i => grid.appendChild(makeCard(i)));
+        
+        if (results.length === 0) {
+            // No more results to fetch
+            document.getElementById('infinite-scroll-sentinel').style.display = 'none';
+        }
+    } catch (e) { console.error('Paging error', e); } finally {
+        isFetchingMore = false;
+        loader.classList.remove('active');
+    }
+}
+
+function genreNames(ids) { return (ids || []).map(i => GENRE_MAP[i]).filter(Boolean); }
 
 async function loadDetailFromUrl(type, id) {
     try {
@@ -213,6 +299,7 @@ function makeRow(cfg, items) {
 function makeCard(item, badgeType, idx) {
     const card = document.createElement('div');
     card.className = 'card';
+    card.style.animationDelay = `${(idx % 20) * 0.05}s`;
 
     if (item.poster) {
         const img = document.createElement('img');
@@ -513,6 +600,44 @@ function closePlayer() {
 }
 
 
+async function applyFilter(genreId, genreName) {
+    const sp = document.getElementById('search-page');
+    const mr = document.getElementById('main-rows');
+    const he = document.getElementById('hero');
+    const ml = document.getElementById('mylist-page');
+
+    filterCurrent = { id: genreId, name: genreName };
+    filterPage = 1;
+    lastSearchQuery = '';
+    document.getElementById('infinite-scroll-sentinel').style.display = 'block';
+    navTo('filter', false);
+
+    he.style.display = 'none'; mr.style.display = 'none'; ml.classList.remove('active');
+    sp.classList.add('active');
+
+    document.getElementById('search-heading').innerHTML = `Movies & Shows: <span>${escapeHtml(genreName)}</span>`;
+    const grid = document.getElementById('search-grid');
+    grid.innerHTML = '<div style="color:#808080;padding:40px;text-align:center">Filtering…</div>';
+
+    try {
+        const params = { with_genres: genreId };
+        if (genreName === 'Anime') params.with_original_language = 'ja';
+
+        const [m, t] = await Promise.all([
+            tmdb('/discover/movie', params),
+            tmdb('/discover/tv', params)
+        ]);
+        const items = [
+            ...(m.results || []).map(r => norm(r, 'movie')),
+            ...(t.results || []).map(r => norm(r, 'tv'))
+        ].filter(i => i && i.poster).sort((a, b) => (b.rating || 0) - (a.rating || 0));
+
+        if (!items.length) { grid.innerHTML = '<div style="color:#808080;padding:60px;text-align:center">No matches found</div>'; return; }
+        grid.innerHTML = '';
+        items.forEach(i => grid.appendChild(makeCard(i)));
+    } catch (e) { grid.innerHTML = '<div style="color:#ff4444;padding:40px;text-align:center">Filter failed</div>'; }
+}
+
 async function doSearch(q) {
     const sp = document.getElementById('search-page');
     const mr = document.getElementById('main-rows');
@@ -522,8 +647,13 @@ async function doSearch(q) {
     if (!q.trim()) {
         sp.classList.remove('active'); ml.classList.remove('active');
         mr.style.display = ''; he.style.display = '';
+        lastSearchQuery = '';
         return;
     }
+    lastSearchQuery = q;
+    searchPage = 1;
+    filterCurrent = null;
+    document.getElementById('infinite-scroll-sentinel').style.display = 'block';
     he.style.display = 'none'; mr.style.display = 'none'; ml.classList.remove('active');
     sp.classList.add('active');
 
@@ -645,6 +775,10 @@ function navTo(page, updateUrl = true) {
     }
     document.querySelectorAll('.nav-link').forEach(el => el.classList.toggle('active', el.dataset.page === page));
     document.querySelectorAll('.mobile-dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+    document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+    
+    if (page === 'home') filterCurrent = null;
+    
     document.getElementById('mobile-dropdown').classList.remove('open');
 
     const he = document.getElementById('hero'), mr = document.getElementById('main-rows');
@@ -688,6 +822,7 @@ function wireListeners() {
 
     document.querySelectorAll('.nav-link').forEach(el => el.onclick = () => navTo(el.dataset.page));
     document.querySelectorAll('.mobile-dropdown-item').forEach(el => el.onclick = () => navTo(el.dataset.page));
+    document.querySelectorAll('.bottom-nav-item').forEach(el => el.onclick = () => navTo(el.dataset.page));
     document.getElementById('logo-btn').onclick = () => navTo('home');
 
     window.addEventListener('popstate', (e) => {
@@ -707,6 +842,13 @@ function wireListeners() {
     });
 
     document.getElementById('mobile-menu-btn').onclick = () => document.getElementById('mobile-dropdown').classList.toggle('open');
+
+    const filterBtn = document.getElementById('filter-btn');
+    const filterDrop = document.getElementById('filter-dropdown');
+    filterBtn.onclick = (e) => { e.stopPropagation(); filterDrop.classList.toggle('open'); };
+    
+    const mobileFilterTrigger = document.getElementById('mobile-filter-trigger');
+    if (mobileFilterTrigger) mobileFilterTrigger.onclick = (e) => { e.stopPropagation(); filterDrop.classList.toggle('open'); };
 
     const sw = document.getElementById('search-wrapper'), si = document.getElementById('search-input');
     document.getElementById('search-btn').onclick = () => { sw.classList.toggle('open'); if (sw.classList.contains('open')) si.focus(); else { si.value = ''; doSearch(''); hideSuggestions(); } };
@@ -754,6 +896,10 @@ function wireListeners() {
     wireSettingsActions();
 
     document.addEventListener('click', e => {
+        if (filterDrop.classList.contains('open') && !filterDrop.contains(e.target) && !filterBtn.contains(e.target) && (!mobileFilterTrigger || !mobileFilterTrigger.contains(e.target))) {
+            filterDrop.classList.remove('open');
+        }
+
         const dd = document.getElementById('mobile-dropdown');
         const btn = document.getElementById('mobile-menu-btn');
         if (dd.classList.contains('open') && !dd.contains(e.target) && !btn.contains(e.target)) dd.classList.remove('open');
