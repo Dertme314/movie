@@ -163,12 +163,12 @@ img {
 }
 
 
-nav {
+#navbar {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1000;
+    z-index: 1100;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -180,7 +180,7 @@ nav {
     transition: background .4s ease, box-shadow .4s ease;
 }
 
-nav.solid {
+#navbar.solid {
     background: rgba(15, 15, 15, 0.85);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
@@ -2146,7 +2146,7 @@ footer {
         flex: 0 0 calc((100% - 16px) / 4);
     }
 
-    nav,
+    #navbar,
     .content-row,
     .page-section,
     footer,
@@ -2176,7 +2176,7 @@ footer {
         justify-content: center;
     }
 
-    nav {
+    #navbar {
         padding: 0 16px;
         padding-top: var(--safe-top);
         padding-left: max(var(--safe-left), 16px);
@@ -2219,7 +2219,7 @@ footer {
     .account-dropdown {
         position: fixed;
         top: auto;
-        bottom: 0;
+        bottom: calc(64px + var(--safe-bottom));
         left: 0;
         right: 0;
         width: 100%;
@@ -2330,7 +2330,7 @@ footer {
 
     .filter-dropdown {
         position: fixed;
-        bottom: 0;
+        bottom: calc(64px + var(--safe-bottom));
         top: auto;
         left: 0;
         right: 0;
@@ -2555,7 +2555,7 @@ footer {
     }
 
     .search-wrapper.open #search-input {
-        width: calc(100vw - 130px);
+        width: calc(100vw - 220px);
     }
 
     .detail-hero-title {
