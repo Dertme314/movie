@@ -58,7 +58,7 @@
                         <line x1="16.5" y1="16.5" x2="22" y2="22" />
                     </svg>
                 </button>
-                <input type="text" id="search-input" placeholder="Titles, people, genres" spellcheck="false"
+                <input type="text" id="search-input" aria-label="Search movies, TV shows, and people" placeholder="Titles, people, genres" spellcheck="false"
                     autocomplete="off">
                 <button class="search-clear" id="search-clear" aria-label="Clear search">✕</button>
                 <div class="search-suggestions" id="search-suggestions"></div>
@@ -361,7 +361,7 @@
             </div>
             <div class="sync-panel hidden" id="sync-import-panel">
                 <div class="sync-code-input-wrap">
-                    <input type="text" class="sync-code-input" id="sync-import-code" maxlength="6" inputmode="numeric"
+                    <input type="text" class="sync-code-input" id="sync-import-code" aria-label="6-digit sync PIN" maxlength="6" inputmode="numeric"
                         pattern="[0-9]*" placeholder="000000" autocomplete="off">
                 </div>
                 <div class="sync-actions">
