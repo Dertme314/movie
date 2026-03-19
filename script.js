@@ -2,6 +2,8 @@
 const IMG = 'https://image.tmdb.org/t/p';
 const VIDKING = 'https://www.vidking.net/embed';
 const VIDKING_ORIGIN = 'https://www.vidking.net';
+const VIDEASY = 'https://player.videasy.net';
+let playerSource = localStorage.getItem('vk_player') || 'videasy';
 
 const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
 const API_KEY = IS_LOCAL ? '85134f05e0f15fe779e23cd56c1a08d5' : null;
@@ -561,10 +563,20 @@ function playContent(item, season, episode) {
     const e = episode || 1;
 
     let url;
+    const isVidking = playerSource === 'vidking';
+
     if (item.type === 'tv') {
-        url = `${VIDKING}/tv/${item.id}/${s}/${e}?color=e50914&autoPlay=true&nextEpisode=true&episodeSelector=true`;
+        if (isVidking) {
+            url = `${VIDKING}/tv/${item.id}/${s}/${e}?color=e50914&autoPlay=true&nextEpisode=true&episodeSelector=true`;
+        } else {
+            url = `${VIDEASY}/tv/${item.id}/${s}/${e}?color=e50914&autoplayNextEpisode=true&nextEpisode=true&episodeSelector=true`;
+        }
     } else {
-        url = `${VIDKING}/movie/${item.id}?color=e50914&autoPlay=true`;
+        if (isVidking) {
+            url = `${VIDKING}/movie/${item.id}?color=e50914&autoPlay=true`;
+        } else {
+            url = `${VIDEASY}/movie/${item.id}?color=e50914`;
+        }
     }
 
     closeDetail();
@@ -992,6 +1004,20 @@ function wireSettingsActions() {
         document.getElementById('nav-avatar').classList.remove('open');
         openSyncModal();
     };
+
+    const playerText = document.getElementById('player-source-text');
+    if (playerText) playerText.textContent = playerSource === 'vidking' ? 'Player: VidKing' : 'Player: VidEasy';
+
+    const playerToggleBtn = document.getElementById('settings-toggle-player');
+    if (playerToggleBtn) {
+        playerToggleBtn.onclick = e => {
+            e.stopPropagation();
+            playerSource = playerSource === 'vidking' ? 'videasy' : 'vidking';
+            localStorage.setItem('vk_player', playerSource);
+            playerText.textContent = playerSource === 'vidking' ? 'Player: VidKing' : 'Player: VidEasy';
+            showToast(`Player set to ${playerSource === 'vidking' ? 'VidKing' : 'VidEasy'}`);
+        };
+    }
 }
 
 let syncTimerInterval = null;
