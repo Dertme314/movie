@@ -302,6 +302,9 @@ function makeCard(item, badgeType, idx) {
     const card = document.createElement('div');
     card.className = 'card';
     card.style.animationDelay = `${(idx % 20) * 0.05}s`;
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `View details for ${item.title}`);
 
     if (item.poster) {
         const img = document.createElement('img');
@@ -349,6 +352,12 @@ function makeCard(item, badgeType, idx) {
     panel.querySelector('[data-do="list"]').onclick = e => { e.stopPropagation(); toggleMyList(item); };
     panel.querySelector('[data-do="info"]').onclick = e => { e.stopPropagation(); openDetail(item); };
     card.onclick = () => openDetail(item);
+    card.onkeydown = e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openDetail(item);
+        }
+    };
     return card;
 }
 
