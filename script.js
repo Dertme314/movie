@@ -485,6 +485,10 @@ async function openDetail(item, updateUrl = true) {
         sims.forEach(si => {
             const sc = document.createElement('div');
             sc.className = 'sim-card';
+            sc.tabIndex = 0;
+            sc.setAttribute('role', 'button');
+            sc.setAttribute('aria-label', `View details for ${escapeHtml(si.title)}`);
+            sc.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sc.click(); } };
             sc.innerHTML = `
                 <img class="sim-card-img" src="${escapeHtml(si.backdrop || si.poster || '')}" alt="${escapeHtml(si.title)}" loading="lazy"
                      onerror="this.style.background='#333'">
@@ -536,7 +540,7 @@ async function fetchEps(tvId, sNum) {
             const still = ep.still_path ? `${IMG}/w300${ep.still_path}` : '';
             const rt = ep.runtime ? `${ep.runtime}m` : '';
             return `
-                <div class="ep-card" onclick="playContent(detailCurrent,${sNum},${ep.episode_number})">
+                <div class="ep-card" tabindex="0" role="button" aria-label="Play episode ${ep.episode_number}: ${escapeHtml(ep.name) || 'Episode ' + ep.episode_number}" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); this.click(); }" onclick="playContent(detailCurrent,${sNum},${ep.episode_number})">
                     <div class="ep-index">${ep.episode_number}</div>
                     <div class="ep-thumb" style="background-image:url(${escapeHtml(still)})">
                         <div class="ep-play-overlay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
@@ -700,7 +704,7 @@ async function fetchSuggestions(q) {
         const items = (data.results || []).map(r => norm(r)).filter(i => i && i.poster).slice(0, 6);
         if (!items.length) { box.classList.remove('active'); box.innerHTML = ''; return; }
         box.innerHTML = items.map(i => `
-            <div class="suggest-item" data-id="${escapeHtml(i.id)}" data-type="${escapeHtml(i.type)}">
+            <div class="suggest-item" tabindex="0" role="button" aria-label="${escapeHtml(i.title)}" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); this.click(); }" data-id="${escapeHtml(i.id)}" data-type="${escapeHtml(i.type)}">
                 <img class="suggest-poster" src="${escapeHtml(i.poster)}" alt="${escapeHtml(i.title)}" loading="lazy" onerror="this.style.background='#333'">
                 <div class="suggest-info">
                     <div class="suggest-title">${escapeHtml(i.title)}</div>
