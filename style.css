@@ -1339,7 +1339,7 @@ img {
 }
 
 .card:hover,
-.card:focus-within {
+.card:focus-visible {
     transform: scale(1.25) translateY(-2%);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.9), 0 0 30px rgba(229, 9, 20, 0.15);
     z-index: 30;
@@ -1358,7 +1358,7 @@ img {
 }
 
 .card:hover img,
-.card:focus-within img {
+.card:focus-visible img {
     filter: brightness(.5);
 }
 
@@ -1386,6 +1386,7 @@ img {
 }
 
 .card:hover .card-panel,
+.card:focus-visible .card-panel,
 .card:focus-within .card-panel {
     transform: translateY(0);
     opacity: 1;
@@ -1537,7 +1538,7 @@ img {
 }
 
 .card-grid .card:hover,
-.card-grid .card:focus-within {
+.card-grid .card:focus-visible {
     transform: scale(1.08);
 }
 
@@ -2367,7 +2368,7 @@ footer {
     }
 
     .card:hover,
-    .card:focus-within {
+    .card:focus-visible {
         transform: scale(1.05);
     }
 
