@@ -1,0 +1,22 @@
+{
+  "name": "Dert - Premium Movies & TV Shows",
+  "short_name": "Dert",
+  "description": "Dert is your premium destination to discover and track the best movies and TV shows online.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["window-controls-overlay", "fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "dir": "ltr",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "https://dert-movie.vercel.app/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
