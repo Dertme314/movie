@@ -1263,7 +1263,8 @@ img {
     position: relative;
 }
 
-.slider-wrap:hover .slide-arrow {
+.slider-wrap:hover .slide-arrow,
+.slider-wrap:focus-within .slide-arrow {
     opacity: 1;
 }
 
