@@ -337,10 +337,11 @@ function makeCard(item, badgeType, idx) {
     const genres = genreNames(item.genreIds).slice(0, 3).join(' · ');
     const panel = document.createElement('div');
     panel.className = 'card-panel';
+    const inList = isInMyList(item.id);
     panel.innerHTML = `
         <div class="card-btns">
             <button class="card-circle play-c" data-do="play" title="Play" aria-label="Play">▶</button>
-            <button class="card-circle" data-do="list" title="My List" aria-label="My List">+</button>
+            <button class="card-circle ${inList ? 'in-list' : ''}" data-do="list" title="${inList ? 'Remove from List' : 'Add to My List'}" aria-label="${inList ? 'Remove from List' : 'Add to My List'}">${inList ? '✓' : '+'}</button>
             <button class="card-circle card-info-btn" data-do="info" title="More Info" aria-label="More Info">⌄</button>
         </div>
         ${item.rating ? `<div class="card-match">${Math.round(item.rating * 10)}% Match</div>` : ''}
@@ -349,7 +350,16 @@ function makeCard(item, badgeType, idx) {
     card.appendChild(panel);
 
     panel.querySelector('[data-do="play"]').onclick = e => { e.stopPropagation(); playContent(item); };
-    panel.querySelector('[data-do="list"]').onclick = e => { e.stopPropagation(); toggleMyList(item); };
+    const listBtn = panel.querySelector('[data-do="list"]');
+    listBtn.onclick = e => {
+        e.stopPropagation();
+        toggleMyList(item);
+        const nowInList = isInMyList(item.id);
+        listBtn.textContent = nowInList ? '✓' : '+';
+        listBtn.title = nowInList ? 'Remove from List' : 'Add to My List';
+        listBtn.setAttribute('aria-label', nowInList ? 'Remove from List' : 'Add to My List');
+        listBtn.classList.toggle('in-list', nowInList);
+    };
     panel.querySelector('[data-do="info"]').onclick = e => { e.stopPropagation(); openDetail(item); };
     card.onclick = () => openDetail(item);
     card.onkeydown = e => {
@@ -735,8 +745,13 @@ function getMyList() { return JSON.parse(localStorage.getItem('vk_mylist') || '[
 function isInMyList(id) { return getMyList().some(i => i.id === id); }
 function toggleMyList(item) {
     let ls = getMyList();
-    if (ls.some(i => i.id === item.id)) ls = ls.filter(i => i.id !== item.id);
-    else ls.unshift({ id: item.id, title: item.title, type: item.type, poster: item.poster, backdrop: item.backdrop, desc: item.desc, rating: item.rating, year: item.year, genreIds: item.genreIds || [] });
+    if (ls.some(i => i.id === item.id)) {
+        ls = ls.filter(i => i.id !== item.id);
+        showToast('Removed from My List');
+    } else {
+        ls.unshift({ id: item.id, title: item.title, type: item.type, poster: item.poster, backdrop: item.backdrop, desc: item.desc, rating: item.rating, year: item.year, genreIds: item.genreIds || [] });
+        showToast('Added to My List');
+    }
     localStorage.setItem('vk_mylist', JSON.stringify(ls.slice(0, 100)));
 }
 function showMyList() {
