@@ -13,6 +13,12 @@
   "lang": "en",
   "icons": [
     {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "https://dert-movie.vercel.app/favicon.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
