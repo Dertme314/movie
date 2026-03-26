@@ -652,7 +652,7 @@ async function applyFilter(genreId, genreName) {
 
     document.getElementById('search-heading').innerHTML = `Movies & Shows: <span>${escapeHtml(genreName)}</span>`;
     const grid = document.getElementById('search-grid');
-    grid.innerHTML = '<div style="color:#808080;padding:40px;text-align:center">Filtering…</div>';
+    grid.innerHTML = '<div class="loading-spinner-wrap active" style="grid-column: 1 / -1;"><div class="spinner"></div></div>';
 
     try {
         const params = { with_genres: genreId };
@@ -667,10 +667,15 @@ async function applyFilter(genreId, genreName) {
             ...(t.results || []).map(r => norm(r, 'tv'))
         ].filter(i => i && i.poster).sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
-        if (!items.length) { grid.innerHTML = '<div style="color:#808080;padding:60px;text-align:center">No matches found</div>'; return; }
+        if (!items.length) {
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg><h3>No matches found</h3><p>Try selecting a different genre.</p></div>';
+            return;
+        }
         grid.innerHTML = '';
         items.forEach(i => grid.appendChild(makeCard(i)));
-    } catch (e) { grid.innerHTML = '<div style="color:#ff4444;padding:40px;text-align:center">Filter failed</div>'; }
+    } catch (e) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Something went wrong</h3><p>Please try again later.</p></div>';
+    }
 }
 
 async function doSearch(q) {
@@ -694,15 +699,20 @@ async function doSearch(q) {
 
     document.getElementById('search-heading').innerHTML = `Search results for "<span>${escapeHtml(q)}</span>"`;
     const grid = document.getElementById('search-grid');
-    grid.innerHTML = '<div style="color:#808080;padding:40px;text-align:center">Searching…</div>';
+    grid.innerHTML = '<div class="loading-spinner-wrap active" style="grid-column: 1 / -1;"><div class="spinner"></div></div>';
 
     try {
         const data = await tmdb('/search/multi', { query: q });
         const items = (data.results || []).map(r => norm(r)).filter(i => i && i.poster);
-        if (!items.length) { grid.innerHTML = '<div style="color:#808080;padding:60px;text-align:center">No results found</div>'; return; }
+        if (!items.length) {
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><h3>No results found</h3><p>Try adjusting your search query.</p></div>';
+            return;
+        }
         grid.innerHTML = '';
         items.forEach(i => grid.appendChild(makeCard(i)));
-    } catch (e) { grid.innerHTML = '<div style="color:#ff4444;padding:40px;text-align:center">Search failed</div>'; }
+    } catch (e) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Something went wrong</h3><p>Please try again later.</p></div>';
+    }
 }
 
 
