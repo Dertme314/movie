@@ -293,8 +293,9 @@ img {
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease, visibility 0s 0.3s;
     z-index: 1000;
     box-shadow: 0 16px 50px rgba(0, 0, 0, 0.7);
 }
@@ -314,8 +315,10 @@ img {
 
 .filter-dropdown.open {
     opacity: 1;
+    visibility: visible;
     transform: translateX(-50%) translateY(0);
-    pointer-events: all;
+    pointer-events: auto;
+    transition: all 0.3s ease, visibility 0s 0s;
 }
 
 .filter-item {
@@ -420,7 +423,7 @@ img {
 
 .search-wrapper.open .search-clear {
     opacity: 1;
-    pointer-events: all;
+    pointer-events: auto;
 }
 
 .search-clear:hover {
@@ -442,12 +445,20 @@ img {
     border-top: none;
     border-radius: 0 0 6px 6px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, .7);
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition: opacity .25s cubic-bezier(0.2, 0.8, 0.2, 1), transform .25s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 0.25s;
     z-index: 100;
 }
 
 .search-suggestions.active {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition: opacity .25s cubic-bezier(0.2, 0.8, 0.2, 1), transform .25s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 0s;
 }
 
 .suggest-item {
@@ -561,9 +572,10 @@ img {
     border-radius: 6px;
     box-shadow: 0 16px 50px rgba(0, 0, 0, .7);
     opacity: 0;
+    visibility: hidden;
     transform: translateY(-8px);
     pointer-events: none;
-    transition: opacity .25s ease, transform .25s ease;
+    transition: opacity .25s ease, transform .25s ease, visibility 0s 0.25s;
     z-index: 200;
     overflow: hidden;
 }
@@ -583,8 +595,10 @@ img {
 
 .account-dropdown.open {
     opacity: 1;
+    visibility: visible;
     transform: translateY(0);
-    pointer-events: all;
+    pointer-events: auto;
+    transition: opacity .25s ease, transform .25s ease, visibility 0s 0s;
 }
 
 .account-header {
@@ -712,13 +726,16 @@ img {
     align-items: center;
     justify-content: center;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity .3s ease;
+    transition: opacity .3s ease, visibility 0s .3s;
 }
 
 .sync-overlay.active {
     opacity: 1;
-    pointer-events: all;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity .3s ease, visibility 0s 0s;
 }
 
 .sync-modal {
@@ -998,14 +1015,17 @@ img {
     gap: 6px;
     transform: translateY(-10px);
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: all .3s ease;
+    transition: all .3s ease, visibility 0s 0.3s;
 }
 
 .mobile-dropdown.open {
     transform: translateY(0);
     opacity: 1;
-    pointer-events: all;
+    visibility: visible;
+    pointer-events: auto;
+    transition: all .3s ease, visibility 0s 0s;
 }
 
 .mobile-dropdown-item {
@@ -1220,6 +1240,7 @@ img {
     z-index: 2;
     margin-top: -120px;
     padding-bottom: 60px;
+    animation: contentFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .content-row {
@@ -1517,8 +1538,14 @@ img {
     min-height: 60vh;
 }
 
+@keyframes contentFadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .page-section.active {
     display: block;
+    animation: contentFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .page-heading {
@@ -1586,15 +1613,18 @@ img {
     overscroll-behavior: contain;
     padding: 2% 0 5%;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity .35s;
+    transition: opacity .35s, visibility 0s .35s;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
 }
 
 .detail-overlay.active {
     opacity: 1;
-    pointer-events: all;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity .35s, visibility 0s 0s;
 }
 
 .detail-modal {
@@ -2040,15 +2070,18 @@ img {
     z-index: 5000;
     background: #000;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity .35s;
+    transition: opacity .35s, visibility 0s .35s;
     display: flex;
     flex-direction: column;
 }
 
 .player-overlay.active {
     opacity: 1;
-    pointer-events: all;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity .35s, visibility 0s 0s;
 }
 
 .player-back {
