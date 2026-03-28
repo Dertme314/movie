@@ -541,11 +541,11 @@ function syncListBtn(item) {
 
 async function fetchEps(tvId, sNum) {
     const list = document.getElementById('episodes-list');
-    list.innerHTML = '<div style="color:#808080;padding:20px;text-align:center">Loading episodes…</div>';
+    list.innerHTML = '<div class="loading-spinner-wrap active"><div class="spinner"></div></div>';
     try {
         const d = await tmdb(`/tv/${tvId}/season/${sNum}`);
         const eps = d.episodes || [];
-        if (!eps.length) { list.innerHTML = '<div style="color:#808080;padding:20px">No episodes</div>'; return; }
+        if (!eps.length) { list.innerHTML = '<div class="empty-state"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><h3>No episodes</h3><p>Episodes for this season are not available yet.</p></div>'; return; }
         list.innerHTML = eps.map(ep => {
             const still = ep.still_path ? `${IMG}/w300${ep.still_path}` : '';
             const rt = ep.runtime ? `${ep.runtime}m` : '';
@@ -564,7 +564,7 @@ async function fetchEps(tvId, sNum) {
                     </div>
                 </div>`;
         }).join('');
-    } catch (e) { list.innerHTML = '<div style="color:#ff4444;padding:20px">Failed to load</div>'; }
+    } catch (e) { list.innerHTML = '<div class="empty-state"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Failed to load</h3><p>Please try again later.</p></div>'; }
 }
 
 

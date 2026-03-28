@@ -58,6 +58,12 @@ button:focus-visible,
     outline-offset: 2px;
 }
 
+.card-circle:active,
+.circle-action:active,
+.modal-close:active {
+    transform: scale(0.92) !important;
+}
+
 img {
     display: block;
     max-width: 100%;
