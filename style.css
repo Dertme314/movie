@@ -812,12 +812,22 @@ img {
     border: 1px solid rgba(255, 255, 255, .1);
     border-radius: 12px;
     user-select: all;
-    transition: border-color .3s, color .3s;
+    transition: border-color .3s, color .3s, transform .2s, background .2s;
 }
 
 .sync-pin-display.active {
     border-color: rgba(70, 211, 105, .4);
     color: #46d369;
+    cursor: pointer;
+    transform: scale(1);
+}
+
+.sync-pin-display.active:hover {
+    background: rgba(70, 211, 105, 0.1);
+}
+
+.sync-pin-display.active:active {
+    transform: scale(0.98);
 }
 
 .sync-pin-hint {
