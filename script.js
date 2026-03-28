@@ -1098,8 +1098,12 @@ let syncTimerInterval = null;
 
 function openSyncModal() {
     const ov = document.getElementById('sync-overlay');
-    document.getElementById('sync-pin-display').textContent = '------';
-    document.getElementById('sync-pin-display').classList.remove('active');
+    const pinDisplay = document.getElementById('sync-pin-display');
+    pinDisplay.textContent = '------';
+    pinDisplay.classList.remove('active');
+    pinDisplay.removeAttribute('title');
+    pinDisplay.onclick = null;
+    pinDisplay.onkeydown = null;
     document.getElementById('sync-pin-timer').textContent = '';
     document.getElementById('sync-import-code').value = '';
     document.getElementById('sync-export-status').textContent = '';
@@ -1175,6 +1179,20 @@ async function generateSyncCode() {
 
         pinDisplay.textContent = result.pin;
         pinDisplay.classList.add('active');
+        pinDisplay.title = 'Click to copy';
+        pinDisplay.onclick = () => {
+            navigator.clipboard.writeText(result.pin).then(() => {
+                showToast('PIN copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy PIN');
+            });
+        };
+        pinDisplay.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                pinDisplay.click();
+            }
+        };
         status.textContent = `${keys.length} item${keys.length > 1 ? 's' : ''} ready to sync`;
         status.className = 'sync-status success';
         btn.textContent = 'Generate New PIN';
@@ -1191,6 +1209,9 @@ async function generateSyncCode() {
                 timerEl.textContent = 'PIN expired';
                 pinDisplay.textContent = '------';
                 pinDisplay.classList.remove('active');
+                pinDisplay.removeAttribute('title');
+                pinDisplay.onclick = null;
+                pinDisplay.onkeydown = null;
                 status.textContent = 'PIN expired — generate a new one';
                 status.className = 'sync-status error';
                 return;
