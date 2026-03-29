@@ -239,9 +239,13 @@ img {
     font-weight: 400;
     color: #e5e5e5;
     cursor: pointer;
-    transition: color .3s;
+    transition: color .3s, transform .2s ease;
     position: relative;
     padding: 2px 0;
+}
+
+.nav-link:active {
+    transform: scale(0.95);
 }
 
 .nav-link:hover {
@@ -328,11 +332,15 @@ img {
     cursor: pointer;
     border-radius: 4px;
     text-align: center;
-    transition: all 0.2s;
+    transition: all 0.2s, transform .2s ease;
     background: rgba(255, 255, 255, 0.03);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.filter-item:active {
+    transform: scale(0.97);
 }
 
 .filter-item:hover {
@@ -367,7 +375,11 @@ img {
     display: flex;
     align-items: center;
     opacity: .8;
-    transition: opacity .2s;
+    transition: opacity .2s, transform .2s ease;
+}
+
+.nav-icon-btn:active {
+    transform: scale(0.95);
 }
 
 .nav-icon-btn:hover {
@@ -645,8 +657,12 @@ img {
     padding: 12px 16px;
     font-size: .85rem;
     color: #d2d2d2;
-    transition: background .15s, color .15s;
+    transition: background .15s, color .15s, transform .2s ease;
     text-align: left;
+}
+
+.account-item:active {
+    transform: scale(0.97);
 }
 
 .account-item:hover {
@@ -985,9 +1001,13 @@ img {
     gap: 4px;
     color: #888;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s, transform .2s ease;
     flex: 1;
     padding-top: 10px;
+}
+
+.bottom-nav-item:active {
+    transform: scale(0.95);
 }
 
 .bottom-nav-item span {
@@ -1046,7 +1066,11 @@ img {
     color: #b3b3b3;
     cursor: pointer;
     border-radius: 4px;
-    transition: background .2s, color .2s;
+    transition: background .2s, color .2s, transform .2s ease;
+}
+
+.mobile-dropdown-item:active {
+    transform: scale(0.97);
 }
 
 .mobile-dropdown-item:hover,
