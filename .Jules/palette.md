@@ -12,3 +12,7 @@
 ## 2026-03-25 : Beautiful Empty States
 **Learning:** Plain text error and empty messages ("No results found") make the interface feel broken or unresponsive. Using an established `.empty-state` component with an SVG icon and clear, actionable subtext dramatically improves the perceived quality of the app.
 **Action:** Always check if a project has an existing `.empty-state` class or similar pattern before inserting raw text into the DOM for empty states.
+
+## 2026-03-26 : Inline Feedback vs Global Toasts
+**Learning:** For direct, self-contained interactive components like a generated PIN code, a global toast ("PIN copied to clipboard") isn't enough to make the interaction feel truly responsive or premium. The visual distance between the action (clicking the PIN) and the feedback (a toast at the bottom/top of the screen) creates a slight disconnect.
+**Action:** When users interact with a single prominent piece of data (like copying a code), always provide immediate inline visual feedback (e.g., transforming the code text to "COPIED", changing the background color locally) in addition to, or instead of, a global notification.

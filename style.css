@@ -835,7 +835,7 @@ img {
     border: 1px solid rgba(255, 255, 255, .1);
     border-radius: 12px;
     user-select: all;
-    transition: border-color .3s, color .3s, transform .2s, background .2s;
+    transition: border-color .3s, color .3s, transform .2s, background .2s, font-size .3s, letter-spacing .3s;
 }
 
 .sync-pin-display.active {
@@ -851,6 +851,14 @@ img {
 
 .sync-pin-display.active:active {
     transform: scale(0.98);
+}
+
+.sync-pin-display.copied {
+    letter-spacing: 4px;
+    font-size: 2.2rem;
+    color: #fff;
+    background: #46d369;
+    border-color: #46d369;
 }
 
 .sync-pin-hint {
