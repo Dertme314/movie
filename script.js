@@ -1100,7 +1100,7 @@ function openSyncModal() {
     const ov = document.getElementById('sync-overlay');
     const pinDisplay = document.getElementById('sync-pin-display');
     pinDisplay.textContent = '------';
-    pinDisplay.classList.remove('active');
+    pinDisplay.classList.remove('active', 'copied');
     pinDisplay.removeAttribute('title');
     pinDisplay.onclick = null;
     pinDisplay.onkeydown = null;
@@ -1182,7 +1182,16 @@ async function generateSyncCode() {
         pinDisplay.title = 'Click to copy';
         pinDisplay.onclick = () => {
             navigator.clipboard.writeText(result.pin).then(() => {
+                const orig = pinDisplay.textContent;
+                pinDisplay.textContent = 'COPIED';
+                pinDisplay.classList.add('copied');
                 showToast('PIN copied to clipboard!');
+                setTimeout(() => {
+                    if (pinDisplay.classList.contains('active')) {
+                        pinDisplay.textContent = result.pin;
+                        pinDisplay.classList.remove('copied');
+                    }
+                }, 1500);
             }).catch(() => {
                 showToast('Failed to copy PIN');
             });
@@ -1208,7 +1217,7 @@ async function generateSyncCode() {
                 syncTimerInterval = null;
                 timerEl.textContent = 'PIN expired';
                 pinDisplay.textContent = '------';
-                pinDisplay.classList.remove('active');
+                pinDisplay.classList.remove('active', 'copied');
                 pinDisplay.removeAttribute('title');
                 pinDisplay.onclick = null;
                 pinDisplay.onkeydown = null;
