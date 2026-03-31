@@ -16,3 +16,7 @@
 ## 2026-03-26 : Inline Feedback vs Global Toasts
 **Learning:** For direct, self-contained interactive components like a generated PIN code, a global toast ("PIN copied to clipboard") isn't enough to make the interaction feel truly responsive or premium. The visual distance between the action (clicking the PIN) and the feedback (a toast at the bottom/top of the screen) creates a slight disconnect.
 **Action:** When users interact with a single prominent piece of data (like copying a code), always provide immediate inline visual feedback (e.g., transforming the code text to "COPIED", changing the background color locally) in addition to, or instead of, a global notification.
+
+## 2026-03-31 : Async Button Processing Feedback
+**Learning:** Relying solely on disabled state or changed text (e.g., 'Uploading...') on buttons during async actions leaves users uncertain if the system is actually working or if it has frozen. Text alone lacks the dynamism needed to reassure the user.
+**Action:** Always provide active visual feedback for async actions by injecting a lightweight, animated spinner (like `.btn-spinner`) alongside the text within a flex-aligned button.
