@@ -404,6 +404,11 @@ img {
     padding: 7px;
     display: flex;
     align-items: center;
+    transition: transform 0.2s ease;
+}
+
+.search-btn:active {
+    transform: scale(0.92);
 }
 
 #search-input {
@@ -429,8 +434,12 @@ img {
     font-size: .8rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .2s;
+    transition: opacity .2s, transform 0.2s ease;
     padding: 4px;
+}
+
+.search-clear:active {
+    transform: scale(0.92);
 }
 
 .search-wrapper.open .search-clear {
@@ -948,6 +957,10 @@ img {
     font-size: .85rem;
     font-weight: 600;
     transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .sync-btn-primary {
@@ -2229,6 +2242,13 @@ footer {
     border-radius: 50%;
     border-top-color: #e50914;
     animation: spin 0.8s linear infinite;
+}
+
+.btn-spinner {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+    border-top-color: #ffffff;
 }
 
 #infinite-scroll-sentinel {

@@ -1163,7 +1163,7 @@ async function generateSyncCode() {
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<div class="btn-spinner"></div><span>Uploading...</span>';
+    btn.innerHTML = '<div class="spinner btn-spinner"></div> Uploading...';
     status.textContent = '';
     status.className = 'sync-status';
 
@@ -1255,7 +1255,7 @@ async function importSyncCode() {
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<div class="btn-spinner"></div><span>Syncing...</span>';
+    btn.innerHTML = '<div class="spinner btn-spinner"></div> Syncing...';
     status.textContent = '';
 
     try {
