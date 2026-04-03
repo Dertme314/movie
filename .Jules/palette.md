@@ -20,3 +20,6 @@
 ## 2026-04-02 : Visual Feedback on Async and Icon Buttons
 **Learning:** Pure text changes on async buttons ("Uploading...") can be missed by users, and icon-only buttons (like search) without `active` states feel unresponsive on mobile/touch interfaces.
 **Action:** Always include a visual spinner (`.btn-spinner`) for async network requests in modals, and apply `active:scale-95` type transform feedback to all interactive icon buttons to improve perceived performance.
+## 2026-03-31 : Async Button Processing Feedback
+**Learning:** Relying solely on disabled state or changed text (e.g., 'Uploading...') on buttons during async actions leaves users uncertain if the system is actually working or if it has frozen. Text alone lacks the dynamism needed to reassure the user.
+**Action:** Always provide active visual feedback for async actions by injecting a lightweight, animated spinner (like `.btn-spinner`) alongside the text within a flex-aligned button.
