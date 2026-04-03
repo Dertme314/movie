@@ -62,7 +62,12 @@
                 </button>
                 <input type="text" id="search-input" aria-label="Search movies, TV shows, and people" placeholder="Titles, people, genres" spellcheck="false"
                     autocomplete="off">
-                <button class="search-clear" id="search-clear" aria-label="Clear search">✕</button>
+                <button class="search-clear" id="search-clear" aria-label="Clear search">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
                 <div class="search-suggestions" id="search-suggestions"></div>
             </div>
             <button class="nav-icon-btn" aria-label="Notifications">
