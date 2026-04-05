@@ -559,7 +559,7 @@ async function fetchEps(tvId, sNum) {
     try {
         const d = await tmdb(`/tv/${tvId}/season/${sNum}`);
         const eps = d.episodes || [];
-        if (!eps.length) { list.innerHTML = '<div class="empty-state"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><h3>No episodes</h3><p>Episodes for this season are not available yet.</p></div>'; return; }
+        if (!eps.length) { list.innerHTML = '<div class="empty-state"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><h3>No episodes</h3><p>Episodes for this season are not available yet.</p><button class="btn-hero btn-gray" style="margin-top: 20px;" onclick="closeDetail()">Go Back</button></div>'; return; }
         list.innerHTML = eps.map(ep => {
             const still = ep.still_path ? `${IMG}/w300${ep.still_path}` : '';
             const rt = ep.runtime ? `${ep.runtime}m` : '';
@@ -578,7 +578,7 @@ async function fetchEps(tvId, sNum) {
                     </div>
                 </div>`;
         }).join('');
-    } catch (e) { list.innerHTML = '<div class="empty-state"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Failed to load</h3><p>Please try again later.</p></div>'; }
+    } catch (e) { list.innerHTML = '<div class="empty-state"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Failed to load</h3><p>Please try again later.</p><button class="btn-hero btn-gray" style="margin-top: 20px;" onclick="closeDetail()">Go Back</button></div>'; }
 }
 
 
@@ -682,13 +682,13 @@ async function applyFilter(genreId, genreName) {
         ].filter(i => i && i.poster).sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
         if (!items.length) {
-            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg><h3>No matches found</h3><p>Try selecting a different genre.</p></div>';
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg><h3>No matches found</h3><p>Try selecting a different genre.</p><button class="btn-hero btn-white" style="margin-top: 20px;" onclick="navTo(\'home\')">Browse Home</button></div>';
             return;
         }
         grid.innerHTML = '';
         items.forEach(i => grid.appendChild(makeCard(i)));
     } catch (e) {
-        grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Something went wrong</h3><p>Please try again later.</p></div>';
+        grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Something went wrong</h3><p>Please try again later.</p><button class="btn-hero btn-white" style="margin-top: 20px;" onclick="navTo(\'home\')">Browse Home</button></div>';
     }
 }
 
@@ -719,13 +719,13 @@ async function doSearch(q) {
         const data = await tmdb('/search/multi', { query: q });
         const items = (data.results || []).map(r => norm(r)).filter(i => i && i.poster);
         if (!items.length) {
-            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><h3>No results found</h3><p>Try adjusting your search query.</p></div>';
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><h3>No results found</h3><p>Try adjusting your search query.</p><button class="btn-hero btn-white" style="margin-top: 20px;" onclick="document.getElementById(\'search-clear\').click()">Clear Search</button></div>';
             return;
         }
         grid.innerHTML = '';
         items.forEach(i => grid.appendChild(makeCard(i)));
     } catch (e) {
-        grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Something went wrong</h3><p>Please try again later.</p></div>';
+        grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Something went wrong</h3><p>Please try again later.</p><button class="btn-hero btn-white" style="margin-top: 20px;" onclick="document.getElementById(\'search-clear\').click()">Clear Search</button></div>';
     }
 }
 
