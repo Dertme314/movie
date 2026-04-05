@@ -283,7 +283,7 @@ function makeRow(cfg, items) {
     sec.innerHTML = `
         <div class="row-head">
             <h2>${cfg.title}</h2>
-            <span class="see-all">Explore All ›</span>
+            <span class="see-all">Explore All <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
         </div>
         <div class="slider-wrap">
             <button class="slide-arrow l" aria-label="Left">
