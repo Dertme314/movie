@@ -1391,8 +1391,12 @@ img {
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity .3s, background .2s;
+    transition: opacity .3s, background .2s, transform .2s ease;
     cursor: pointer;
+}
+
+.slide-arrow:active {
+    transform: scale(0.92);
 }
 
 .slide-arrow:hover {
