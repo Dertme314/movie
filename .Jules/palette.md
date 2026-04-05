@@ -23,3 +23,7 @@
 ## 2026-03-31 : Async Button Processing Feedback
 **Learning:** Relying solely on disabled state or changed text (e.g., 'Uploading...') on buttons during async actions leaves users uncertain if the system is actually working or if it has frozen. Text alone lacks the dynamism needed to reassure the user.
 **Action:** Always provide active visual feedback for async actions by injecting a lightweight, animated spinner (like `.btn-spinner`) alongside the text within a flex-aligned button.
+
+## 2024-05-18 : Iconography Consistency
+**Learning:** Text-based icons (like `✕`, `‹`, `▶`, `+`, `✓`, `⌄`) look inconsistent across different devices and operating systems because they rely on system fonts, making them difficult to align and style consistently.
+**Action:** Always replace text characters meant to act as icons with properly formatted inline SVGs. This ensures crisp rendering, perfect alignment, and seamless interaction scaling (e.g. `transform: scale(1.1)`) across all platforms.

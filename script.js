@@ -286,9 +286,17 @@ function makeRow(cfg, items) {
             <span class="see-all">Explore All ›</span>
         </div>
         <div class="slider-wrap">
-            <button class="slide-arrow l" aria-label="Left">‹</button>
+            <button class="slide-arrow l" aria-label="Left">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
             <div class="slider-track"></div>
-            <button class="slide-arrow r" aria-label="Right">›</button>
+            <button class="slide-arrow r" aria-label="Right">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
         </div>`;
     const track = sec.querySelector('.slider-track');
     items.forEach((item, idx) => track.appendChild(makeCard(item, cfg.badge, idx)));
@@ -338,11 +346,17 @@ function makeCard(item, badgeType, idx) {
     const panel = document.createElement('div');
     panel.className = 'card-panel';
     const inList = isInMyList(item.id);
+    const plusIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    const checkIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
     panel.innerHTML = `
         <div class="card-btns">
-            <button class="card-circle play-c" data-do="play" title="Play" aria-label="Play">▶</button>
-            <button class="card-circle ${inList ? 'in-list' : ''}" data-do="list" title="${inList ? 'Remove from List' : 'Add to My List'}" aria-label="${inList ? 'Remove from List' : 'Add to My List'}">${inList ? '✓' : '+'}</button>
-            <button class="card-circle card-info-btn" data-do="info" title="More Info" aria-label="More Info">⌄</button>
+            <button class="card-circle play-c" data-do="play" title="Play" aria-label="Play">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>
+            </button>
+            <button class="card-circle ${inList ? 'in-list' : ''}" data-do="list" title="${inList ? 'Remove from List' : 'Add to My List'}" aria-label="${inList ? 'Remove from List' : 'Add to My List'}">${inList ? checkIcon : plusIcon}</button>
+            <button class="card-circle card-info-btn" data-do="info" title="More Info" aria-label="More Info">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
         </div>
         ${item.rating ? `<div class="card-match">${Math.round(item.rating * 10)}% Match</div>` : ''}
         <div class="card-name">${item.title}</div>
@@ -355,7 +369,7 @@ function makeCard(item, badgeType, idx) {
         e.stopPropagation();
         toggleMyList(item);
         const nowInList = isInMyList(item.id);
-        listBtn.textContent = nowInList ? '✓' : '+';
+        listBtn.innerHTML = nowInList ? checkIcon : plusIcon;
         listBtn.title = nowInList ? 'Remove from List' : 'Add to My List';
         listBtn.setAttribute('aria-label', nowInList ? 'Remove from List' : 'Add to My List');
         listBtn.classList.toggle('in-list', nowInList);
