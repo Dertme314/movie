@@ -360,6 +360,11 @@ img {
     font-size: .82rem;
     color: #e5e5e5;
     cursor: pointer;
+    transition: transform .2s ease;
+}
+
+.mobile-menu-btn:active {
+    transform: scale(0.95);
 }
 
 
@@ -490,6 +495,10 @@ img {
     cursor: pointer;
     transition: background .15s;
     border-bottom: 1px solid rgba(255, 255, 255, .04);
+}
+
+.suggest-item:active {
+    transform: scale(0.97);
 }
 
 .suggest-item:hover {
@@ -832,7 +841,11 @@ img {
     font-weight: 600;
     color: #888;
     border-radius: 6px;
-    transition: all .2s;
+    transition: all .2s, transform .2s ease;
+}
+
+.sync-tab:active {
+    transform: scale(0.97);
 }
 
 .sync-tab.active {
@@ -1923,8 +1936,12 @@ img {
     padding: 16px 8px;
     cursor: pointer;
     border-bottom: 1px solid rgba(255, 255, 255, .08);
-    transition: background .2s;
+    transition: background .2s, transform .2s ease;
     border-radius: 4px;
+}
+
+.ep-card:active {
+    transform: scale(0.97);
 }
 
 .ep-card:hover {
@@ -2044,7 +2061,11 @@ img {
     border-radius: 6px;
     overflow: hidden;
     cursor: pointer;
-    transition: background .2s, transform .2s;
+    transition: background .2s, transform .2s ease;
+}
+
+.sim-card:active {
+    transform: scale(0.97);
 }
 
 .sim-card:hover {
