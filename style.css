@@ -1340,7 +1340,12 @@ img {
     gap: 6px;
     margin-bottom: 6px;
     cursor: pointer;
-    transition: color .2s;
+    transition: color .2s, transform .2s ease;
+    transform-origin: left center;
+}
+
+.row-head:active {
+    transform: scale(0.98);
 }
 
 .row-head h2 {
