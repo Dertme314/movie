@@ -447,7 +447,7 @@ img {
     transform: scale(0.92);
 }
 
-.search-wrapper.open .search-clear {
+.search-wrapper.open.has-text .search-clear {
     opacity: 1;
     pointer-events: auto;
 }

@@ -27,3 +27,7 @@
 ## 2024-05-18 : Iconography Consistency
 **Learning:** Text-based icons (like `✕`, `‹`, `▶`, `+`, `✓`, `⌄`) look inconsistent across different devices and operating systems because they rely on system fonts, making them difficult to align and style consistently.
 **Action:** Always replace text characters meant to act as icons with properly formatted inline SVGs. This ensures crisp rendering, perfect alignment, and seamless interaction scaling (e.g. `transform: scale(1.1)`) across all platforms.
+
+## 2024-05-18 : Search Clear Button Visibility
+**Learning:** Having an always-visible 'clear' ('X') button in empty search inputs adds unnecessary UI clutter, especially since it serves no purpose until text is entered.
+**Action:** Always conditionally render or show/hide input clear buttons (e.g., 'X') inside search or text fields based on whether the input contains text (such as toggling a `.has-text` class).
