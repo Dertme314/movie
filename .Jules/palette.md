@@ -31,3 +31,6 @@
 ## 2024-05-18 : Search Clear Button Visibility
 **Learning:** Having an always-visible 'clear' ('X') button in empty search inputs adds unnecessary UI clutter, especially since it serves no purpose until text is entered.
 **Action:** Always conditionally render or show/hide input clear buttons (e.g., 'X') inside search or text fields based on whether the input contains text (such as toggling a `.has-text` class).
+## 2026-04-03 : Contextual Input Clear Buttons
+**Learning:** Showing a 'clear input' (X) button inside a search or text field before the user has typed anything creates unnecessary UI clutter and provides an action that cannot be performed.
+**Action:** Always conditionally render or show/hide clear buttons based on the input's content state (e.g., toggling a `.has-text` class), ensuring the button is only visible when there is actual text to clear.
