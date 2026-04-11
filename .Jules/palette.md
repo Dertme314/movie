@@ -31,3 +31,7 @@
 ## 2026-04-03 : Contextual Input Clear Buttons
 **Learning:** Showing a 'clear input' (X) button inside a search or text field before the user has typed anything creates unnecessary UI clutter and provides an action that cannot be performed.
 **Action:** Always conditionally render or show/hide clear buttons based on the input's content state (e.g., toggling a `.has-text` class), ensuring the button is only visible when there is actual text to clear.
+
+## 2024-05-18 : Auto-Focus in Modal Tabs
+**Learning:** When navigating between tabs inside a modal (like switching from a 'Share' tab to a 'Receive' tab), users expect to immediately type their input without an extra click. It's a key piece of friction if they start typing and nothing happens.
+**Action:** Always auto-focus the primary input field (e.g., using `element.focus()`) when toggling its visibility via tab or modal navigation.
