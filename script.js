@@ -1143,6 +1143,12 @@ function switchSyncTab(tab) {
     document.querySelectorAll('.sync-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     document.getElementById('sync-export-panel').classList.toggle('hidden', tab !== 'export');
     document.getElementById('sync-import-panel').classList.toggle('hidden', tab !== 'import');
+
+    if (tab === 'import') {
+        setTimeout(() => {
+            document.getElementById('sync-import-code').focus();
+        }, 50);
+    }
 }
 
 function getSyncData() {
