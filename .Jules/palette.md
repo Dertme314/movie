@@ -35,3 +35,7 @@
 ## 2026-04-05 : Auto-focusing Dynamically Revealed Inputs
 **Learning:** When dynamically revealing primary input fields (like switching to a 'Receive' tab to enter a code or opening a search modal), users experience friction if they have to click the input field again to start typing.
 **Action:** Always auto-focus (e.g., `element.focus()`) primary input fields when toggling their visibility via tab or modal navigation. Wrap the `.focus()` call in a brief `setTimeout` (e.g., 50ms) to ensure the DOM has rendered the element as visible before applying focus.
+
+## 2026-04-17 : Input Clear Buttons
+**Learning:** Adding clear buttons to input fields (like search or sync PIN inputs) improves UX by allowing users to quickly wipe the field. However, to avoid visual clutter, these buttons should only be shown when the input is non-empty. We can use a `.has-text` class to conditionally display the button.
+**Action:** When creating new input fields with clear functionality, wrap the input and the clear button in a container. Toggle a `.has-text` class on the container dynamically via JS to conditionally render the clear button, ensuring a cleaner default UI.
