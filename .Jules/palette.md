@@ -35,3 +35,7 @@
 ## 2026-04-05 : Auto-focusing Dynamically Revealed Inputs
 **Learning:** When dynamically revealing primary input fields (like switching to a 'Receive' tab to enter a code or opening a search modal), users experience friction if they have to click the input field again to start typing.
 **Action:** Always auto-focus (e.g., `element.focus()`) primary input fields when toggling their visibility via tab or modal navigation. Wrap the `.focus()` call in a brief `setTimeout` (e.g., 50ms) to ensure the DOM has rendered the element as visible before applying focus.
+
+## 2024-05-18 : Active State Indicators Animation
+**Learning:** Using CSS transform transitions on `scaleX()` (from 0 to 1) for active state indicators like tab underlines creates a much smoother reveal animation than instant state changes.
+**Action:** When creating active or selected state indicators, apply `transform: scaleX(0)` by default and transition to `scaleX(1)` with `transition: transform 0.3s ease` to ensure the transition is smooth.
