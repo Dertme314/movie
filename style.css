@@ -257,16 +257,21 @@ img {
     font-weight: 700;
 }
 
-.nav-link.active::after {
+.nav-link::after {
     content: '';
     position: absolute;
     bottom: -4px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scaleX(0);
     width: 14px;
     height: 2px;
     background: #e50914;
     border-radius: 1px;
+    transition: transform 0.3s ease;
+}
+
+.nav-link.active::after {
+    transform: translateX(-50%) scaleX(1);
 }
 
 .nav-link-dropdown {
