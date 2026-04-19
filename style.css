@@ -928,6 +928,34 @@ img {
     display: flex;
     justify-content: center;
     padding: 16px 0;
+    position: relative;
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+.sync-code-clear {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform 0.2s ease;
+    padding: 4px;
+}
+
+.sync-code-clear:active {
+    transform: translateY(-50%) scale(0.92);
+}
+
+.sync-code-input-wrap.has-text .sync-code-clear {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sync-code-clear:hover {
+    color: #fff;
 }
 
 .sync-code-input {
