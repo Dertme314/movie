@@ -39,3 +39,6 @@
 ## 2026-04-17 : Input Clear Buttons
 **Learning:** Adding clear buttons to input fields (like search or sync PIN inputs) improves UX by allowing users to quickly wipe the field. However, to avoid visual clutter, these buttons should only be shown when the input is non-empty. We can use a `.has-text` class to conditionally display the button.
 **Action:** When creating new input fields with clear functionality, wrap the input and the clear button in a container. Toggle a `.has-text` class on the container dynamically via JS to conditionally render the clear button, ensuring a cleaner default UI.
+## 2026-04-10 : Animating Active States
+**Learning:** Abruptly switching states (like instantly appearing underlines on active tabs) feels cheap and breaks visual continuity, whereas smooth reveals feel deliberate and premium.
+**Action:** When designing indicators for active or selected states (like tab underlines), use CSS transitions on transform properties (like `scaleX(0)` to `scaleX(1)`) to create smooth reveal animations rather than relying on instant state changes.
