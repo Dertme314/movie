@@ -948,7 +948,7 @@ function wireListeners() {
     }
 
     const sw = document.getElementById('search-wrapper'), si = document.getElementById('search-input');
-    document.getElementById('search-btn').onclick = () => { sw.classList.toggle('open'); if (sw.classList.contains('open')) si.focus(); else { si.value = ''; sw.classList.remove('has-text'); doSearch(''); hideSuggestions(); } };
+    document.getElementById('search-btn').onclick = () => { sw.classList.toggle('open'); if (sw.classList.contains('open')) setTimeout(() => si.focus(), 50); else { si.value = ''; sw.classList.remove('has-text'); doSearch(''); hideSuggestions(); } };
     document.getElementById('search-clear').onclick = () => { si.value = ''; sw.classList.remove('has-text'); doSearch(''); hideSuggestions(); si.focus(); };
     si.oninput = () => {
         sw.classList.toggle('has-text', si.value.trim().length > 0);
