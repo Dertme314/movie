@@ -252,6 +252,11 @@ img {
     color: #b3b3b3;
 }
 
+.nav-link.active {
+    color: #fff;
+    font-weight: 700;
+}
+
 .nav-link::after {
     content: '';
     position: absolute;
@@ -263,11 +268,6 @@ img {
     background: #e50914;
     border-radius: 1px;
     transition: transform 0.3s ease;
-}
-
-.nav-link.active {
-    color: #fff;
-    font-weight: 700;
 }
 
 .nav-link.active::after {
