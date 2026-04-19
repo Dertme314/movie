@@ -948,7 +948,7 @@ function wireListeners() {
     }
 
     const sw = document.getElementById('search-wrapper'), si = document.getElementById('search-input');
-    document.getElementById('search-btn').onclick = () => { sw.classList.toggle('open'); if (sw.classList.contains('open')) si.focus(); else { si.value = ''; sw.classList.remove('has-text'); doSearch(''); hideSuggestions(); } };
+    document.getElementById('search-btn').onclick = () => { sw.classList.toggle('open'); if (sw.classList.contains('open')) setTimeout(() => si.focus(), 50); else { si.value = ''; sw.classList.remove('has-text'); doSearch(''); hideSuggestions(); } };
     document.getElementById('search-clear').onclick = () => { si.value = ''; sw.classList.remove('has-text'); doSearch(''); hideSuggestions(); si.focus(); };
     si.oninput = () => {
         sw.classList.toggle('has-text', si.value.trim().length > 0);
@@ -1121,6 +1121,7 @@ function openSyncModal() {
     pinDisplay.onkeydown = null;
     document.getElementById('sync-pin-timer').textContent = '';
     document.getElementById('sync-import-code').value = '';
+    document.getElementById('sync-code-wrap').classList.remove('has-text');
     document.getElementById('sync-export-status').textContent = '';
     document.getElementById('sync-export-status').className = 'sync-status';
     document.getElementById('sync-import-status').textContent = '';
@@ -1318,7 +1319,16 @@ async function importSyncCode() {
     document.getElementById('sync-generate').onclick = generateSyncCode;
     document.getElementById('sync-import-btn').onclick = importSyncCode;
     const codeInput = document.getElementById('sync-import-code');
-    codeInput.oninput = () => { codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6); };
+    const codeWrap = document.getElementById('sync-code-wrap');
+    codeInput.oninput = () => {
+        codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
+        codeWrap.classList.toggle('has-text', codeInput.value.length > 0);
+    };
+    document.getElementById('sync-code-clear').onclick = () => {
+        codeInput.value = '';
+        codeWrap.classList.remove('has-text');
+        codeInput.focus();
+    };
 })();
 
 function hideLoader() { setTimeout(() => document.getElementById('loader-screen').classList.add('hidden'), 800); }
