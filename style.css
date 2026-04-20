@@ -286,6 +286,14 @@ img {
     gap: 4px;
 }
 
+.filter-caret {
+    transition: transform 0.2s ease;
+}
+
+#filter-btn.open .filter-caret {
+    transform: rotate(180deg);
+}
+
 .filter-dropdown {
     position: absolute;
     top: calc(100% + 20px);
@@ -342,6 +350,7 @@ img {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: all 0.2s ease;
 }
 
 .filter-item:active {
@@ -1338,6 +1347,10 @@ img {
 .btn-white:hover {
     background: rgba(255, 255, 255, 0.8);
     box-shadow: 0 6px 25px rgba(255, 255, 255, 0.3);
+}
+
+.btn-white:active {
+    transform: scale(.94);
 }
 
 .btn-gray {
