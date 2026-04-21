@@ -45,3 +45,7 @@
 ## 2026-04-10 : Animating Active States
 **Learning:** Abruptly switching states (like instantly appearing underlines on active tabs) feels cheap and breaks visual continuity, whereas smooth reveals feel deliberate and premium.
 **Action:** When designing indicators for active or selected states (like tab underlines), use CSS transitions on transform properties (like `scaleX(0)` to `scaleX(1)`) to create smooth reveal animations rather than relying on instant state changes.
+
+## 2024-05-19 : Filter caret rotation and tactile buttons
+**Learning:** Found that custom dropdowns in this app (like the filter menu) lacked micro-interactions for the trigger buttons (caret rotation) and internal items (hover/active transitions), making them feel slightly rigid. Also, `.btn-white` was missing the tactile scale-down `active:scale-95` equivalent that primary buttons use.
+**Action:** Always add `transform: rotate()` transitions to carets on dropdown triggers when toggling their `.open` class. Ensure that all button variants (like `.btn-white`, `.btn-gray`) get an `.active` scaling transition so tactile feedback is consistent across the entire application. Added `transition: all 0.2s ease` to list items (`.filter-item`) to ensure hover state changes feel polished.

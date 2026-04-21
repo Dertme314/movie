@@ -135,6 +135,8 @@ function buildFilterMenu() {
             const name = el.textContent;
             applyFilter(id, name);
             box.classList.remove('open');
+            const fb = document.getElementById('filter-btn');
+            if (fb) fb.classList.remove('open');
         };
     });
 }
@@ -937,13 +939,13 @@ function wireListeners() {
     const filterBtn = document.getElementById('filter-btn');
     const filterDrop = document.getElementById('filter-dropdown');
     if (filterBtn) {
-        filterBtn.onclick = (e) => { e.stopPropagation(); filterDrop.classList.toggle('open'); };
+        filterBtn.onclick = (e) => { e.stopPropagation(); filterDrop.classList.toggle('open'); filterBtn.classList.toggle('open'); };
         // makeInteractive(filterBtn); // Already handled in .nav-link loop
     }
     
     const mobileFilterTrigger = document.getElementById('mobile-filter-trigger');
     if (mobileFilterTrigger) {
-        mobileFilterTrigger.onclick = (e) => { e.stopPropagation(); filterDrop.classList.toggle('open'); };
+        mobileFilterTrigger.onclick = (e) => { e.stopPropagation(); filterDrop.classList.toggle('open'); if (filterBtn) filterBtn.classList.toggle('open'); };
         // makeInteractive(mobileFilterTrigger); // Already handled in .bottom-nav-item loop
     }
 
@@ -999,6 +1001,7 @@ function wireListeners() {
     document.addEventListener('click', e => {
         if (filterDrop.classList.contains('open') && !filterDrop.contains(e.target) && !filterBtn.contains(e.target) && (!mobileFilterTrigger || !mobileFilterTrigger.contains(e.target))) {
             filterDrop.classList.remove('open');
+            if (filterBtn) filterBtn.classList.remove('open');
         }
 
         const dd = document.getElementById('mobile-dropdown');
