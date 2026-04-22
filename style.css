@@ -824,6 +824,10 @@ img {
     color: #fff;
 }
 
+.sync-close:active {
+    transform: scale(0.92);
+}
+
 .sync-header {
     display: flex;
     align-items: center;
@@ -1021,6 +1025,10 @@ img {
     align-items: center;
     justify-content: center;
     gap: 8px;
+}
+
+.sync-btn:active {
+    transform: scale(.97);
 }
 
 .sync-btn-primary {
@@ -1364,6 +1372,10 @@ img {
 .btn-gray:hover {
     background: rgba(109, 109, 110, 0.7);
     border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-gray:active {
+    transform: scale(.94);
 }
 
 
@@ -2258,6 +2270,10 @@ img {
 .player-back:hover {
     background: rgba(0, 0, 0, .7);
     opacity: 1;
+}
+
+.player-back:active {
+    transform: scale(0.95);
 }
 
 .player-frame-wrap {

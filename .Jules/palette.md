@@ -49,3 +49,7 @@
 ## 2024-05-19 : Filter caret rotation and tactile buttons
 **Learning:** Found that custom dropdowns in this app (like the filter menu) lacked micro-interactions for the trigger buttons (caret rotation) and internal items (hover/active transitions), making them feel slightly rigid. Also, `.btn-white` was missing the tactile scale-down `active:scale-95` equivalent that primary buttons use.
 **Action:** Always add `transform: rotate()` transitions to carets on dropdown triggers when toggling their `.open` class. Ensure that all button variants (like `.btn-white`, `.btn-gray`) get an `.active` scaling transition so tactile feedback is consistent across the entire application. Added `transition: all 0.2s ease` to list items (`.filter-item`) to ensure hover state changes feel polished.
+
+## 2026-04-20 : Comprehensive Tactile Feedback
+**Learning:** Some secondary or specialized buttons (like `.btn-gray`, `.sync-close`, `.sync-btn`, `.player-back`) lacked the `.active` scaling transition that core buttons possess. This creates subtle inconsistencies in how "responsive" the interface feels across different screens.
+**Action:** Always ensure *every* clickable component, regardless of its variant or placement (e.g., modals, overlays, secondary actions), includes a `:active { transform: scale(...) }` rule so that tactile feedback remains uniform across the application.
