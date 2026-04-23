@@ -458,7 +458,7 @@ img {
     font-size: .8rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .2s, transform 0.2s ease;
+    transition: opacity .2s, transform 0.2s ease, color 0.2s ease;
     padding: 4px;
 }
 
@@ -710,7 +710,7 @@ img {
 .account-item svg {
     flex-shrink: 0;
     opacity: .7;
-    transition: opacity .15s;
+    transition: opacity .15s, stroke 0.2s ease;
 }
 
 .account-item:hover svg {
@@ -1116,7 +1116,7 @@ img {
 .bottom-nav-item svg {
     width: 20px;
     height: 20px;
-    transition: transform 0.2s;
+    transition: transform 0.2s, stroke 0.2s ease;
 }
 
 .bottom-nav-item.active svg {
@@ -1881,6 +1881,10 @@ img {
     background: rgba(255, 255, 255, .25);
 }
 
+.circle-action svg {
+    transition: transform 0.2s ease;
+}
+
 .circle-action.in-list svg {
     transform: rotate(45deg);
 }
@@ -2249,7 +2253,7 @@ img {
     background: rgba(0, 0, 0, .5);
     padding: 10px 18px 10px 12px;
     border-radius: 6px;
-    transition: background .2s, opacity .2s;
+    transition: background .2s, opacity .2s, transform 0.2s ease;
     opacity: .8;
     min-height: 44px;
     min-width: 44px;
@@ -2258,6 +2262,10 @@ img {
 .player-back:hover {
     background: rgba(0, 0, 0, .7);
     opacity: 1;
+}
+
+.player-back:active {
+    transform: scale(0.96);
 }
 
 .player-frame-wrap {

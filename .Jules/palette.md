@@ -67,3 +67,6 @@
 
 **Learning:** Found that custom dropdowns in this app (like the filter menu) lacked micro-interactions for the trigger buttons (caret rotation) and internal items (hover/active transitions), making them feel slightly rigid. Also, `.btn-white` was missing the tactile scale-down `active:scale-95` equivalent that primary buttons use.
 **Action:** Always add `transform: rotate()` transitions to carets on dropdown triggers when toggling their `.open` class. Ensure that all button variants (like `.btn-white`, `.btn-gray`) get an `.active` scaling transition so tactile feedback is consistent across the entire application. Added `transition: all 0.2s ease` to list items (`.filter-item`) to ensure hover state changes feel polished.
+## 2024-05-14 : Icon transitions and active states
+**Learning:** Some elements like icon-only buttons (`.circle-action`, `.search-clear`) and specific buttons (`.player-back`) were missing subtle active scale transforms and color/transform transitions that were present on other interactive elements, causing a slight disconnect in the tactile feel. Also, SVG colors on active/hover needed `stroke 0.2s ease` transitions.
+**Action:** Consistently added `transform 0.2s ease`, `color 0.2s ease` and `stroke 0.2s ease` to missing SVG and icon interactions, and added `active:scale-0.96` to buttons like `.player-back`.
