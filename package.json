@@ -1,0 +1,20 @@
+{
+  "name": "dert-movie",
+  "version": "1.0.0",
+  "description": "Dert - Premium Movies & TV Shows",
+  "type": "module",
+  "scripts": {
+    "dev": "npx http-server -p 8080",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "movies",
+    "tv shows",
+    "streaming"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
