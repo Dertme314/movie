@@ -247,7 +247,7 @@ function buildFilterMenu() {
   }
 
   box.innerHTML = uniqueGenres
-    .map((g) => `<div class="filter-item" data-id="${g.id}">${g.name}</div>`)
+    .map((g) => `<div class="filter-item" data-id="${g.id}" tabindex="0" role="button" aria-label="${g.name}">${g.name}</div>`)
     .join("");
   box.querySelectorAll(".filter-item").forEach((el) => {
     el.onclick = () => {
@@ -258,6 +258,7 @@ function buildFilterMenu() {
       const fb = document.getElementById("filter-btn");
       if (fb) fb.classList.remove("open");
     };
+    makeInteractive(el);
   });
 }
 
@@ -433,13 +434,13 @@ function makeRow(cfg, items) {
             <span class="see-all">Explore All <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
         </div>
         <div class="slider-wrap">
-            <button class="slide-arrow l" aria-label="Left">
+            <button class="slide-arrow l" aria-label="Left" title="Previous">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
             </button>
             <div class="slider-track"></div>
-            <button class="slide-arrow r" aria-label="Right">
+            <button class="slide-arrow r" aria-label="Right" title="Next">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
@@ -1053,7 +1054,7 @@ async function fetchSuggestions(q) {
         `,
         )
         .join("") +
-      `<div class="suggest-footer" id="suggest-see-all">See all results for "${escapeHtml(q)}"</div>`;
+      `<div class="suggest-footer" id="suggest-see-all" tabindex="0" role="button">See all results for "${escapeHtml(q)}"</div>`;
     box.querySelectorAll(".suggest-item").forEach((el, idx) => {
       el.onclick = () => {
         box.classList.remove("active");
@@ -1066,6 +1067,7 @@ async function fetchSuggestions(q) {
       box.innerHTML = "";
       doSearch(q);
     };
+    makeInteractive(document.getElementById("suggest-see-all"));
     box.classList.add("active");
   } catch (_) {
     box.classList.remove("active");
