@@ -1204,6 +1204,8 @@ function navTo(page, updateUrl = true) {
   if (page === "home") filterCurrent = null;
 
   document.getElementById("mobile-dropdown").classList.remove("open");
+  const mobileBtn = document.getElementById("mobile-menu-btn");
+  if (mobileBtn) mobileBtn.classList.remove("open");
 
   const he = document.getElementById("hero"),
     mr = document.getElementById("main-rows");
@@ -1316,8 +1318,10 @@ function wireListeners() {
 
   const mobileMenuBtn = document.getElementById("mobile-menu-btn");
   if (mobileMenuBtn) {
-    mobileMenuBtn.onclick = () =>
+    mobileMenuBtn.onclick = () => {
       document.getElementById("mobile-dropdown").classList.toggle("open");
+      mobileMenuBtn.classList.toggle("open");
+    };
     makeInteractive(mobileMenuBtn);
   }
 
@@ -1445,8 +1449,10 @@ function wireListeners() {
       dd.classList.contains("open") &&
       !dd.contains(e.target) &&
       !btn.contains(e.target)
-    )
+    ) {
       dd.classList.remove("open");
+      btn.classList.remove("open");
+    }
     if (accDrop.classList.contains("open") && !avatar.contains(e.target)) {
       accDrop.classList.remove("open");
       avatar.classList.remove("open");
