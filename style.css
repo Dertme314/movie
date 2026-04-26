@@ -381,6 +381,14 @@ img {
     transform: scale(0.95);
 }
 
+.mobile-menu-btn svg {
+    transition: transform 0.2s ease;
+}
+
+.mobile-menu-btn.open svg {
+    transform: rotate(180deg);
+}
+
 
 .nav-right {
     display: flex;
@@ -1881,6 +1889,10 @@ img {
     background: rgba(255, 255, 255, .25);
 }
 
+.circle-action svg {
+    transition: transform 0.2s ease;
+}
+
 .circle-action.in-list svg {
     transform: rotate(45deg);
 }
@@ -2253,6 +2265,10 @@ img {
     opacity: .8;
     min-height: 44px;
     min-width: 44px;
+}
+
+.player-back:active {
+    transform: scale(0.95) !important;
 }
 
 .player-back:hover {

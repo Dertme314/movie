@@ -67,3 +67,8 @@
 
 **Learning:** Found that custom dropdowns in this app (like the filter menu) lacked micro-interactions for the trigger buttons (caret rotation) and internal items (hover/active transitions), making them feel slightly rigid. Also, `.btn-white` was missing the tactile scale-down `active:scale-95` equivalent that primary buttons use.
 **Action:** Always add `transform: rotate()` transitions to carets on dropdown triggers when toggling their `.open` class. Ensure that all button variants (like `.btn-white`, `.btn-gray`) get an `.active` scaling transition so tactile feedback is consistent across the entire application. Added `transition: all 0.2s ease` to list items (`.filter-item`) to ensure hover state changes feel polished.
+
+## 2026-04-20 : Animating Rotations and Tactile Buttons
+
+**Learning:** When a button or interactive element triggers a state change (like opening a menu or toggling a list), the state of the icon inside it should reflect the transition smoothly. For example, a caret rotating or a plus turning into a check mark should use a CSS transform transition (e.g., `transition: transform 0.2s ease`) so it doesn't snap abruptly. Additionally, all tactile action buttons (like back buttons or icon-only controls) need an `:active` state (e.g., `transform: scale(0.95)`) to feel responsive to touch or click.
+**Action:** When adding rotational states (like `.open svg { transform: rotate(180deg); }`) or toggling class names that rotate an SVG, always ensure the `svg` element itself has `transition: transform` applied. Furthermore, consistently apply `:active` scaling rules to all new interactive buttons to maintain standard tactile feedback.
