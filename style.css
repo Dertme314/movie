@@ -1366,6 +1366,10 @@ img {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
+.btn-gray:active {
+    transform: scale(.94);
+}
+
 
 #main-rows {
     position: relative;
@@ -2249,10 +2253,14 @@ img {
     background: rgba(0, 0, 0, .5);
     padding: 10px 18px 10px 12px;
     border-radius: 6px;
-    transition: background .2s, opacity .2s;
+    transition: background .2s, opacity .2s, transform .2s ease;
     opacity: .8;
     min-height: 44px;
     min-width: 44px;
+}
+
+.player-back:active {
+    transform: scale(0.95);
 }
 
 .player-back:hover {
