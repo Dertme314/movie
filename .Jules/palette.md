@@ -67,3 +67,6 @@
 
 **Learning:** Found that custom dropdowns in this app (like the filter menu) lacked micro-interactions for the trigger buttons (caret rotation) and internal items (hover/active transitions), making them feel slightly rigid. Also, `.btn-white` was missing the tactile scale-down `active:scale-95` equivalent that primary buttons use.
 **Action:** Always add `transform: rotate()` transitions to carets on dropdown triggers when toggling their `.open` class. Ensure that all button variants (like `.btn-white`, `.btn-gray`) get an `.active` scaling transition so tactile feedback is consistent across the entire application. Added `transition: all 0.2s ease` to list items (`.filter-item`) to ensure hover state changes feel polished.
+## 2024-05-18 : [Animation] Active State Transforms and Transitions
+**Learning:** Adding `:active { transform: scale(...) }` for tactile feedback snaps instantaneously unless paired with a corresponding `transition` property on the base class that includes the `transform` property (e.g., `transition: ..., transform 0.2s ease`). The snap feels harsh and unpolished compared to a smooth animation.
+**Action:** When adding active scaling to UI components (e.g., `.player-back`, `.sync-close`), always verify that the base class includes `transform 0.2s ease` in its `transition` declaration to ensure the feedback feels smooth and intentional.
