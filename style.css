@@ -2249,7 +2249,7 @@ img {
     background: rgba(0, 0, 0, .5);
     padding: 10px 18px 10px 12px;
     border-radius: 6px;
-    transition: background .2s, opacity .2s;
+    transition: background .2s, opacity .2s, transform 0.2s ease;
     opacity: .8;
     min-height: 44px;
     min-width: 44px;
@@ -2258,6 +2258,10 @@ img {
 .player-back:hover {
     background: rgba(0, 0, 0, .7);
     opacity: 1;
+}
+
+.player-back:active {
+    transform: scale(0.95);
 }
 
 .player-frame-wrap {
