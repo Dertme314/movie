@@ -67,3 +67,8 @@
 
 **Learning:** Found that custom dropdowns in this app (like the filter menu) lacked micro-interactions for the trigger buttons (caret rotation) and internal items (hover/active transitions), making them feel slightly rigid. Also, `.btn-white` was missing the tactile scale-down `active:scale-95` equivalent that primary buttons use.
 **Action:** Always add `transform: rotate()` transitions to carets on dropdown triggers when toggling their `.open` class. Ensure that all button variants (like `.btn-white`, `.btn-gray`) get an `.active` scaling transition so tactile feedback is consistent across the entire application. Added `transition: all 0.2s ease` to list items (`.filter-item`) to ensure hover state changes feel polished.
+
+## 2026-05-06 : Tactile Feedback on Structural Buttons
+
+**Learning:** Structural and overlaid buttons (like the back button in the player `.player-back` or modal close buttons `.sync-close`) often miss out on the global active states (`:active`) applied to primary utility buttons (`.btn-hero` or `.circle-action`), causing them to feel unresponsive when tapped or clicked.
+**Action:** Always ensure that structural or overlay buttons receive the application's standard tactile feedback by applying `transform: scale(...)` on their `:active` pseudo-class (e.g. `scale(0.92)` or `scale(0.96)`) alongside a corresponding `transform` CSS transition (e.g., `transition: ..., transform 0.2s ease`).
