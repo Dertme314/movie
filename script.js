@@ -247,7 +247,7 @@ function buildFilterMenu() {
   }
 
   box.innerHTML = uniqueGenres
-    .map((g) => `<div class="filter-item" data-id="${g.id}">${g.name}</div>`)
+    .map((g) => `<div class="filter-item" data-id="${g.id}" tabindex="0" role="button" aria-label="Filter by ${escapeHtml(g.name)}">${g.name}</div>`)
     .join("");
   box.querySelectorAll(".filter-item").forEach((el) => {
     el.onclick = () => {
@@ -258,6 +258,7 @@ function buildFilterMenu() {
       const fb = document.getElementById("filter-btn");
       if (fb) fb.classList.remove("open");
     };
+    makeInteractive(el);
   });
 }
 
