@@ -67,3 +67,8 @@
 
 **Learning:** Found that custom dropdowns in this app (like the filter menu) lacked micro-interactions for the trigger buttons (caret rotation) and internal items (hover/active transitions), making them feel slightly rigid. Also, `.btn-white` was missing the tactile scale-down `active:scale-95` equivalent that primary buttons use.
 **Action:** Always add `transform: rotate()` transitions to carets on dropdown triggers when toggling their `.open` class. Ensure that all button variants (like `.btn-white`, `.btn-gray`) get an `.active` scaling transition so tactile feedback is consistent across the entire application. Added `transition: all 0.2s ease` to list items (`.filter-item`) to ensure hover state changes feel polished.
+
+## 2026-04-20 : Tactile Feedback on Overlay Close/Back Buttons
+
+**Learning:** Overlay and modal buttons, such as `.player-back` and `.sync-close`, were lacking the standard tactile feedback (`active:scale`) present on primary application buttons. This made dismissing overlays or exiting full-screen states feel unresponsive and rigid compared to the rest of the application.
+**Action:** Always ensure that structural overlay controls (close buttons, back buttons in absolute/fixed positions) receive smooth tactile feedback by including `transition: transform 0.2s ease` and an `:active { transform: scale(0.92) }` (or similar) rule, aligning them with the established application interaction patterns.
