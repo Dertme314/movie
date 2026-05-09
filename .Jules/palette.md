@@ -48,6 +48,9 @@
 **Learning:** When dynamically revealing primary input fields (like switching to a 'Receive' tab to enter a code or opening a search modal), users experience friction if they have to click the input field again to start typing.
 **Action:** Always auto-focus (e.g., `element.focus()`) primary input fields when toggling their visibility via tab or modal navigation. Wrap the `.focus()` call in a brief `setTimeout` (e.g., 50ms) to ensure the DOM has rendered the element as visible before applying focus.
 
+## 2026-04-10 : Smooth Active State Indicators
+**Learning:** Instant state changes for active indicators (like tab underlines) feel abrupt and lack the visual polish expected in premium interfaces.
+**Action:** Always use CSS transitions on transform properties (e.g., `scaleX(0)` to `scaleX(1)`) to create smooth reveal animations for active or selected state indicators.
 ## 2024-05-18 : Active State Indicators Animation
 
 **Learning:** Using CSS transform transitions on `scaleX()` (from 0 to 1) for active state indicators like tab underlines creates a much smoother reveal animation than instant state changes.
@@ -72,3 +75,6 @@
 
 **Learning:** When making `div` elements interactive (like the search suggestion footer or filter items), applying `tabindex="0"` and `role="button"` makes them focusable, but they also require explicit keyboard event handlers to function like buttons. A native button uses `title` attributes for tooltips, which should be replicated on custom interactive elements or icon-only buttons like the slider arrows.
 **Action:** When adding interactivity to non-button HTML elements (`div`, `span`), strictly maintain accessibility by adding `tabindex="0"`, `role="button"`, an explicit `aria-label`, and use the existing `makeInteractive(el)` helper function in `script.js` to automatically handle 'Enter' and 'Space' keyboard events. For icon-only buttons, ensure they have a `title` attribute to provide a native tooltip for desktop users in addition to standard `aria-label` attributes.
+## 2026-04-20 : Comprehensive Tactile Feedback
+**Learning:** Some secondary or specialized buttons (like `.btn-gray`, `.sync-close`, `.sync-btn`, `.player-back`) lacked the `.active` scaling transition that core buttons possess. This creates subtle inconsistencies in how "responsive" the interface feels across different screens.
+**Action:** Always ensure *every* clickable component, regardless of its variant or placement (e.g., modals, overlays, secondary actions), includes a `:active { transform: scale(...) }` rule so that tactile feedback remains uniform across the application.
