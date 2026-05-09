@@ -1530,6 +1530,14 @@ img {
         z-index 0s 0s;
 }
 
+.card.is-at-start:hover {
+    transform-origin: left center;
+}
+
+.card.is-at-end:hover {
+    transform-origin: right center;
+}
+
 .card img {
     width: 100%;
     height: 100%;

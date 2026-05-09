@@ -353,10 +353,6 @@ async function loadNextPage() {
   }
 }
 
-function genreNames(ids) {
-  return (ids || []).map((i) => GENRE_MAP[i]).filter(Boolean);
-}
-
 async function loadDetailFromUrl(type, id) {
   try {
     const itemData = await tmdb(`/${type}/${id}`);
@@ -418,8 +414,34 @@ async function buildAllRows() {
       return true;
     });
     if (!unique.length) return;
-    main.appendChild(makeRow(cfg, unique));
+    const row = makeRow(cfg, unique);
+    main.appendChild(row);
+    // update
+    setTimeout(() => {
+      const track = row.querySelector(".slider-track");
+      if (track) updateTrackEdges(track);
+    }, 200);
   });
+}
+
+function updateTrackEdges(track) {
+  const cards = Array.from(track.querySelectorAll(".card"));
+  const trackRect = track.getBoundingClientRect();
+
+  let first = null;
+  let last = null;
+
+  cards.forEach((card) => {
+    card.classList.remove("is-at-start", "is-at-end");
+    const rect = card.getBoundingClientRect();
+    if (rect.right > trackRect.left + 20 && rect.left < trackRect.right - 20) {
+      if (!first) first = card;
+      last = card;
+    }
+  });
+
+  if (first) first.classList.add("is-at-start");
+  if (last) last.classList.add("is-at-end");
 }
 
 function makeRow(cfg, items) {
@@ -453,6 +475,17 @@ function makeRow(cfg, items) {
     track.scrollBy({ left: -track.clientWidth * 0.82, behavior: "smooth" });
   sec.querySelector(".slide-arrow.r").onclick = () =>
     track.scrollBy({ left: track.clientWidth * 0.82, behavior: "smooth" });
+
+  let scrollTimeout;
+  track.addEventListener(
+    "scroll",
+    () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => updateTrackEdges(track), 50);
+    },
+    { passive: true },
+  );
+
   return sec;
 }
 
