@@ -2550,7 +2550,7 @@ footer {
     .page-section,
     footer {
         padding-left: max(var(--safe-left), 16px);
-        padding-right: max(var(--safe-right), 16px);
+        padding-right: max(var(--safe-right), 16px);  /* for ui */
     }
 
     .filter-dropdown {

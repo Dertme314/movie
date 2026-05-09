@@ -1305,7 +1305,7 @@ function wireListeners() {
         scrollTicking = true;
       }
     },
-    { passive: true },
+    { passive: true }, // for
   );
 
   document.querySelectorAll(".nav-link").forEach((el) => {
