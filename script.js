@@ -718,7 +718,7 @@ async function openDetail(item, updateUrl = true) {
     pb.onclick = () => playContent(item);
   }
   syncListBtn(item);
-  syncLikeBtn(item);
+  syncRatingBtn(item);
 
   document.getElementById("episodes-section").classList.remove("active");
   document.getElementById("detail-cast-line").innerHTML = "";
@@ -867,45 +867,88 @@ function getLikes() {
   return JSON.parse(localStorage.getItem("vk_likes") || "[]");
 }
 
-function isLiked(id, type) {
-  return getLikes().some((i) => String(i.id) === String(id) && i.type === type);
+function getRating(id, type) {
+  const hit = getLikes().find(
+    (i) => String(i.id) === String(id) && i.type === type,
+  );
+  return hit ? hit.ratingChoice || "like" : null;
 }
 
-function toggleLike(item) {
+function setItemRating(item, ratingChoice) {
   let likes = getLikes();
-  if (isLiked(item.id, item.type)) {
-    likes = likes.filter(
-      (i) => !(String(i.id) === String(item.id) && i.type === item.type),
-    );
-    showToast("Removed from likes");
-  } else {
-    likes.unshift({
-      id: item.id,
-      title: item.title,
-      type: item.type,
-      poster: item.poster,
-      backdrop: item.backdrop,
-      desc: item.desc,
-      rating: item.rating,
-      year: item.year,
-      genreIds: item.genreIds || [],
-    });
-    showToast("Liked");
-  }
+  likes = likes.filter(
+    (i) => !(String(i.id) === String(item.id) && i.type === item.type),
+  );
+  likes.unshift({
+    id: item.id,
+    title: item.title,
+    type: item.type,
+    poster: item.poster,
+    backdrop: item.backdrop,
+    desc: item.desc,
+    rating: item.rating,
+    year: item.year,
+    genreIds: item.genreIds || [],
+    ratingChoice,
+  });
   localStorage.setItem("vk_likes", JSON.stringify(likes.slice(0, 100)));
   buildTasteRow();
+  showToast(
+    ratingChoice === "love"
+      ? "Loved"
+      : ratingChoice === "dislike"
+        ? "Disliked"
+        : "Liked",
+  );
 }
 
-function syncLikeBtn(item) {
+function clearItemRating(item) {
+  const likes = getLikes().filter(
+    (i) => !(String(i.id) === String(item.id) && i.type === item.type),
+  );
+  localStorage.setItem("vk_likes", JSON.stringify(likes));
+  buildTasteRow();
+  showToast("Rating removed");
+}
+
+function closeRatingMenu() {
+  document.getElementById("detail-rating-control")?.classList.remove("open");
+}
+
+function syncRatingBtn(item) {
   const btn = document.getElementById("detail-like-btn");
-  const yes = isLiked(item.id, item.type);
-  btn.classList.toggle("liked", yes);
-  btn.title = yes ? "Unlike" : "Like";
-  btn.setAttribute("aria-label", yes ? "Unlike" : "Like");
-  btn.onclick = () => {
-    toggleLike(item);
-    syncLikeBtn(item);
+  const control = document.getElementById("detail-rating-control");
+  const menu = document.getElementById("detail-rating-menu");
+  const ratingChoice = getRating(item.id, item.type);
+
+  btn.classList.toggle("disliked", ratingChoice === "dislike");
+  btn.classList.toggle("liked", ratingChoice === "like");
+  btn.classList.toggle("loved", ratingChoice === "love");
+  btn.title = ratingChoice ? `Rated: ${ratingChoice}` : "Rate";
+  btn.setAttribute(
+    "aria-label",
+    ratingChoice ? `Rated ${ratingChoice}. Change rating` : "Rate",
+  );
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    control.classList.toggle("open");
   };
+
+  menu.querySelectorAll("[data-rating]").forEach((choice) => {
+    const choiceValue = choice.dataset.rating;
+    choice.classList.toggle("active", choiceValue === ratingChoice);
+    choice.onclick = (e) => {
+      e.stopPropagation();
+      if (choiceValue === ratingChoice) {
+        clearItemRating(item);
+      } else {
+        setItemRating(item, choiceValue);
+      }
+      closeRatingMenu();
+      syncRatingBtn(item);
+    };
+  });
 }
 
 async function fetchEps(tvId, sNum) {
@@ -1271,15 +1314,18 @@ async function buildTasteRow() {
   if (old) old.remove();
 
   const likes = getLikes();
-  const usableLikes = likes.filter((item) => (item.genreIds || []).length);
-  if (!usableLikes.length) return;
+  const positiveLikes = likes.filter(
+    (item) => item.ratingChoice !== "dislike" && (item.genreIds || []).length,
+  );
+  if (!positiveLikes.length) return;
 
   const genreScores = new Map();
   const typeScores = new Map();
-  usableLikes.forEach((item) => {
-    typeScores.set(item.type, (typeScores.get(item.type) || 0) + 1);
+  positiveLikes.forEach((item) => {
+    const weight = item.ratingChoice === "love" ? 3 : 1;
+    typeScores.set(item.type, (typeScores.get(item.type) || 0) + weight);
     (item.genreIds || []).forEach((id) => {
-      genreScores.set(id, (genreScores.get(id) || 0) + 1);
+      genreScores.set(id, (genreScores.get(id) || 0) + weight);
     });
   });
 
@@ -1290,7 +1336,7 @@ async function buildTasteRow() {
   const topTypes = [...typeScores.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([type]) => type);
-  const likedIds = new Set(likes.map((item) => `${item.type}:${item.id}`));
+  const ratedIds = new Set(likes.map((item) => `${item.type}:${item.id}`));
 
   try {
     const calls = (topTypes.length ? topTypes : ["movie", "tv"]).map((type) =>
@@ -1308,7 +1354,7 @@ async function buildTasteRow() {
       .flat()
       .filter((item) => {
         const key = `${item.type}:${item.id}`;
-        if (likedIds.has(key) || seen.has(key) || !item.poster) return false;
+        if (ratedIds.has(key) || seen.has(key) || !item.poster) return false;
         seen.add(key);
         return true;
       })
@@ -1629,6 +1675,11 @@ function wireListeners() {
       accDrop.classList.remove("open");
       avatar.classList.remove("open");
       resetConfirmStates();
+    }
+
+    const ratingControl = document.getElementById("detail-rating-control");
+    if (ratingControl && !ratingControl.contains(e.target)) {
+      closeRatingMenu();
     }
   });
 }
