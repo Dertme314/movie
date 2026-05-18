@@ -1617,6 +1617,11 @@ img {
     border-color: #ddd;
 }
 
+.card-remove-btn:hover {
+    border-color: #fff;
+    background: rgba(229, 9, 20, .85);
+}
+
 .card-info-btn {
     margin-left: auto;
 }
@@ -1903,6 +1908,16 @@ img {
 
 .circle-action.in-list svg {
     transform: rotate(45deg);
+}
+
+.circle-action.liked {
+    border-color: #fff;
+    background: rgba(255, 255, 255, .25);
+}
+
+.circle-action.liked svg {
+    color: #fff;
+    fill: currentColor;
 }
 
 .detail-body {

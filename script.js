@@ -280,6 +280,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await buildAllRows();
     pickHero();
     buildContinueRow();
+    buildTasteRow();
     setupInfiniteScroll();
     if (currentPage !== "home") navTo(currentPage, false);
     hideLoader();
@@ -468,8 +469,9 @@ function makeRow(cfg, items) {
             </button>
         </div>`;
   const track = sec.querySelector(".slider-track");
+  const cardOptions = { canRemoveFromContinue: cfg.id === "continue" };
   items.forEach((item, idx) =>
-    track.appendChild(makeCard(item, cfg.badge, idx)),
+    track.appendChild(makeCard(item, cfg.badge, idx, cardOptions)),
   );
   sec.querySelector(".slide-arrow.l").onclick = () =>
     track.scrollBy({ left: -track.clientWidth * 0.82, behavior: "smooth" });
@@ -489,7 +491,7 @@ function makeRow(cfg, items) {
   return sec;
 }
 
-function makeCard(item, badgeType, idx) {
+function makeCard(item, badgeType, idx, options = {}) {
   const card = document.createElement("div");
   card.className = "card";
   card.style.animationDelay = `${(idx % 20) * 0.05}s`;
@@ -544,12 +546,18 @@ function makeCard(item, badgeType, idx) {
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
   const checkIcon =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+  const removeIcon =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  const removeContinueButton = options.canRemoveFromContinue
+    ? `<button class="card-circle card-remove-btn" data-do="remove-continue" title="Remove from Continue Watching" aria-label="Remove from Continue Watching">${removeIcon}</button>`
+    : "";
   panel.innerHTML = `
         <div class="card-btns">
             <button class="card-circle play-c" data-do="play" title="Play" aria-label="Play">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>
             </button>
             <button class="card-circle ${inList ? "in-list" : ""}" data-do="list" title="${inList ? "Remove from List" : "Add to My List"}" aria-label="${inList ? "Remove from List" : "Add to My List"}">${inList ? checkIcon : plusIcon}</button>
+            ${removeContinueButton}
             <button class="card-circle card-info-btn" data-do="info" title="More Info" aria-label="More Info">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
@@ -575,7 +583,15 @@ function makeCard(item, badgeType, idx) {
       nowInList ? "Remove from List" : "Add to My List",
     );
     listBtn.classList.toggle("in-list", nowInList);
+    if (!nowInList && currentPage === "mylist") showMyList();
   };
+  const removeContinueBtn = panel.querySelector('[data-do="remove-continue"]');
+  if (removeContinueBtn) {
+    removeContinueBtn.onclick = (e) => {
+      e.stopPropagation();
+      removeFromContinueWatching(item);
+    };
+  }
   panel.querySelector('[data-do="info"]').onclick = (e) => {
     e.stopPropagation();
     openDetail(item);
@@ -702,6 +718,7 @@ async function openDetail(item, updateUrl = true) {
     pb.onclick = () => playContent(item);
   }
   syncListBtn(item);
+  syncLikeBtn(item);
 
   document.getElementById("episodes-section").classList.remove("active");
   document.getElementById("detail-cast-line").innerHTML = "";
@@ -843,6 +860,51 @@ function syncListBtn(item) {
   btn.onclick = () => {
     toggleMyList(item);
     syncListBtn(item);
+  };
+}
+
+function getLikes() {
+  return JSON.parse(localStorage.getItem("vk_likes") || "[]");
+}
+
+function isLiked(id, type) {
+  return getLikes().some((i) => String(i.id) === String(id) && i.type === type);
+}
+
+function toggleLike(item) {
+  let likes = getLikes();
+  if (isLiked(item.id, item.type)) {
+    likes = likes.filter(
+      (i) => !(String(i.id) === String(item.id) && i.type === item.type),
+    );
+    showToast("Removed from likes");
+  } else {
+    likes.unshift({
+      id: item.id,
+      title: item.title,
+      type: item.type,
+      poster: item.poster,
+      backdrop: item.backdrop,
+      desc: item.desc,
+      rating: item.rating,
+      year: item.year,
+      genreIds: item.genreIds || [],
+    });
+    showToast("Liked");
+  }
+  localStorage.setItem("vk_likes", JSON.stringify(likes.slice(0, 100)));
+  buildTasteRow();
+}
+
+function syncLikeBtn(item) {
+  const btn = document.getElementById("detail-like-btn");
+  const yes = isLiked(item.id, item.type);
+  btn.classList.toggle("liked", yes);
+  btn.title = yes ? "Unlike" : "Like";
+  btn.setAttribute("aria-label", yes ? "Unlike" : "Like");
+  btn.onclick = () => {
+    toggleLike(item);
+    syncLikeBtn(item);
   };
 }
 
@@ -1168,6 +1230,27 @@ function saveHistory(item) {
   localStorage.setItem("vk_hist", JSON.stringify(h.slice(0, 30)));
 }
 
+function removeProgressForItem(item) {
+  const showKey = `vk_p_${item.type}_${item.id}`;
+  localStorage.removeItem(showKey);
+  if (item.type !== "tv") return;
+
+  const episodePrefix = `vk_p_tv_${item.id}_s`;
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith(episodePrefix))
+    .forEach((key) => localStorage.removeItem(key));
+}
+
+function removeFromContinueWatching(item) {
+  const h = JSON.parse(localStorage.getItem("vk_hist") || "[]").filter(
+    (x) => !(String(x.id) === String(item.id) && x.type === item.type),
+  );
+  localStorage.setItem("vk_hist", JSON.stringify(h));
+  removeProgressForItem(item);
+  buildContinueRow();
+  showToast("Removed from Continue Watching");
+}
+
 function buildContinueRow() {
   const old = document.querySelector('[data-rowid="continue"]');
   if (old) old.remove();
@@ -1181,6 +1264,68 @@ function buildContinueRow() {
     ),
     main.firstChild,
   );
+}
+
+async function buildTasteRow() {
+  const old = document.querySelector('[data-rowid="taste"]');
+  if (old) old.remove();
+
+  const likes = getLikes();
+  const usableLikes = likes.filter((item) => (item.genreIds || []).length);
+  if (!usableLikes.length) return;
+
+  const genreScores = new Map();
+  const typeScores = new Map();
+  usableLikes.forEach((item) => {
+    typeScores.set(item.type, (typeScores.get(item.type) || 0) + 1);
+    (item.genreIds || []).forEach((id) => {
+      genreScores.set(id, (genreScores.get(id) || 0) + 1);
+    });
+  });
+
+  const topGenres = [...genreScores.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([id]) => id);
+  const topTypes = [...typeScores.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([type]) => type);
+  const likedIds = new Set(likes.map((item) => `${item.type}:${item.id}`));
+
+  try {
+    const calls = (topTypes.length ? topTypes : ["movie", "tv"]).map((type) =>
+      tmdb(`/discover/${type}`, {
+        with_genres: topGenres.join("|"),
+        sort_by: "popularity.desc",
+        "vote_count.gte": 50,
+      }).then((data) =>
+        (data.results || []).map((result) => norm(result, type)).filter(Boolean),
+      ),
+    );
+    const batches = await Promise.all(calls);
+    const seen = new Set();
+    const items = batches
+      .flat()
+      .filter((item) => {
+        const key = `${item.type}:${item.id}`;
+        if (likedIds.has(key) || seen.has(key) || !item.poster) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 24);
+
+    if (!items.length) return;
+
+    const main = document.getElementById("main-rows");
+    const continueRow = document.querySelector('[data-rowid="continue"]');
+    const row = makeRow(
+      { id: "taste", title: "Because You Liked These", mediaType: "all" },
+      items,
+    );
+    main.insertBefore(row, continueRow ? continueRow.nextSibling : main.firstChild);
+  } catch (e) {
+    console.warn("Taste recommendations", e);
+  }
 }
 
 function saveProgress(data) {
@@ -1556,7 +1701,9 @@ function wireSettingsActions() {
       try {
         sessionStorage.clear();
       } catch (_) {}
-      showToast("Cache cleared");
+      localStorage.removeItem("vk_likes");
+      buildTasteRow();
+      showToast("Cache and recommendations cleared");
     });
   };
 
@@ -1652,7 +1799,7 @@ function switchSyncTab(tab) {
 
 function getSyncData() {
   const data = {};
-  const prefixes = ["vk_hist", "vk_mylist", "vk_p_"];
+  const prefixes = ["vk_hist", "vk_mylist", "vk_likes", "vk_p_"];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (prefixes.some((p) => key.startsWith(p))) {
@@ -1811,6 +1958,7 @@ async function importSyncCode() {
     setTimeout(() => {
       closeSyncModal();
       buildContinueRow();
+      buildTasteRow();
     }, 1500);
   } catch (e) {
     const msg =
