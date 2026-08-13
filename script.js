@@ -1520,6 +1520,16 @@ function getProgress(id, type, season, episode) {
   return r ? JSON.parse(r) : null;
 }
 
+function makeInteractive(el) {
+  if (!el) return;
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      el.click();
+    }
+  });
+}
+
 function wireListeners() {
   function setVh() {
     const vh =
