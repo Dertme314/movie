@@ -317,6 +317,10 @@ function buildFilterMenu() {
   });
 }
 
+function genreNames(ids) {
+  return (ids || []).map((i) => GENRE_MAP[i]).filter(Boolean);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   wireListeners();
   const route = parseHash(window.location.hash);
@@ -716,35 +720,26 @@ function renderHero() {
 
   const meta = document.getElementById("hero-metadata");
   meta.innerHTML = "";
-  const parts = [];
-  parts.push(`<span>${heroItem.type === "tv" ? "Show" : "Movie"}</span>`);
-  if (heroItem.genreIds && heroItem.genreIds.length) {
-    const mainGenre = genreNames([heroItem.genreIds[0]])[0];
-    if (mainGenre) parts.push(`<span>${mainGenre}</span>`);
+  if (heroItem.rating) {
+    const ms = document.createElement("span");
+    ms.className = "match-score";
+    ms.textContent = `${Math.round(heroItem.rating * 10)}% Match`;
+    meta.appendChild(ms);
   }
   if (heroItem.year) {
-    parts.push(`<span>${heroItem.year}</span>`);
+    const y = document.createElement("span");
+    y.className = "meta-year";
+    y.textContent = heroItem.year;
+    meta.appendChild(y);
   }
-  if (heroItem.rating) {
-    parts.push(`<span class="match-score">${Math.round(heroItem.rating * 10)}% Match</span>`);
-  }
-  parts.push('<span class="meta-badge">HD</span>');
-  meta.innerHTML = parts.join('<span class="meta-dot">•</span>');
+  const mb = document.createElement("span");
+  mb.className = "meta-badge";
+  mb.textContent = "HD";
+  meta.appendChild(mb);
 
   document.getElementById("hero-play-btn").onclick = () =>
     playContent(heroItem);
   document.getElementById("hero-info-btn").onclick = () => openDetail(heroItem);
-
-  const soundBtn = document.getElementById("hero-sound-btn");
-  if (soundBtn) {
-    soundBtn.onclick = () => {
-      const isMuted = soundBtn.classList.toggle("muted");
-      soundBtn.innerHTML = isMuted
-        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>'
-        : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
-      showToast(isMuted ? "Sound muted" : "Sound unmuted");
-    };
-  }
 }
 
 async function openDetail(item, updateUrl = true) {
@@ -1518,6 +1513,62 @@ function getProgress(id, type, season, episode) {
       : `vk_p_${type}_${id}`;
   const r = localStorage.getItem(key);
   return r ? JSON.parse(r) : null;
+}
+
+function navTo(page, updateUrl = true) {
+  currentPage = page;
+  if (updateUrl) {
+    if (page === "home") {
+      history.pushState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
+      );
+    } else {
+      history.pushState(null, "", "#" + page);
+    }
+  }
+  document
+    .querySelectorAll(".nav-link")
+    .forEach((el) => el.classList.toggle("active", el.dataset.page === page));
+  document
+    .querySelectorAll(".mobile-dropdown-item")
+    .forEach((el) => el.classList.toggle("active", el.dataset.page === page));
+  document
+    .querySelectorAll(".bottom-nav-item")
+    .forEach((el) => el.classList.toggle("active", el.dataset.page === page));
+
+  if (page === "home") filterCurrent = null;
+
+  document.getElementById("mobile-dropdown").classList.remove("open");
+
+  const he = document.getElementById("hero"),
+    mr = document.getElementById("main-rows");
+  const sp = document.getElementById("search-page"),
+    ml = document.getElementById("mylist-page");
+  document.getElementById("search-input").value = "";
+  sp.classList.remove("active");
+
+  if (page === "mylist") {
+    he.style.display = "none";
+    mr.style.display = "none";
+    ml.classList.add("active");
+    showMyList();
+    return;
+  }
+  ml.classList.remove("active");
+  he.style.display = "";
+  mr.style.display = "";
+  document.querySelectorAll(".content-row").forEach((r) => {
+    const t = r.dataset.type;
+    r.classList.toggle(
+      "hidden",
+      page !== "home" &&
+        t !== "all" &&
+        t !== (page === "movies" ? "movie" : "tv"),
+    );
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function makeInteractive(el) {

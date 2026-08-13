@@ -1,783 +1,416 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
-    <meta name="theme-color" content="#141414" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <meta
-      name="description"
-      content="Dert is your premium destination to discover and track the best movies and TV shows online. Start exploring our vast catalog today."
-    />
-    <meta
-      name="keywords"
-      content="movies, tv shows, streaming, dert, cinema, watch online, free movies"
-    />
-    <meta property="og:title" content="Dert - Premium Movies & TV Shows" />
-    <meta
-      property="og:description"
-      content="Discover, track, and watch the best movies and TV shows on Dert."
-    />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Dert Premium Movies & TV Shows" />
-    <meta
-      name="twitter:description"
-      content="Discover, track, and watch the best movies and TV shows on Dert."
-    />
-    <title>Dert - Premium Movies & TV Shows</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link rel="stylesheet" href="style.css" />
-    <link rel="manifest" href="manifest.json" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#141414">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Dert is your premium destination to discover and track the best movies and TV shows online. Start exploring our vast catalog today.">
+    <meta name="keywords" content="movies, tv shows, streaming, dert, cinema, watch online, free movies">
+    <meta property="og:title" content="Dert - Premium Movies & TV Shows">
+    <meta property="og:description" content="Discover, track, and watch the best movies and TV shows on Dert.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Dert Premium Movies & TV Shows">
+    <meta name="twitter:description" content="Discover, track, and watch the best movies and TV shows on Dert.">
+    <title>Dert - Premium Movies & TV Shows</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    
     <!-- Vercel Web Analytics -->
     <script>
-      window.va =
-        window.va ||
-        function () {
-          (window.vaq = window.vaq || []).push(arguments);
-        };
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
     <script defer src="/_vercel/insights/script.js"></script>
-  </head>
+</head>
 
-  <body>
+<body>
+
     <nav id="navbar">
-      <div class="nav-left">
-        <div class="logo" id="logo-btn" tabindex="0" role="button">
-          <span class="logo-v">D</span>ERT
-        </div>
-        <ul class="nav-links" id="nav-links">
-          <li
-            class="nav-link active"
-            data-page="home"
-            tabindex="0"
-            role="button"
-          >
-            Home
-          </li>
-          <li class="nav-link-dropdown" id="filter-wrapper">
-            <span class="nav-link" id="filter-btn" tabindex="0" role="button"
-              >Filter
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="filter-caret"
-              >
-                <path d="M7 10l5 5 5-5z" /></svg
-            ></span>
-            <div class="filter-dropdown" id="filter-dropdown">
-              <!-- Genres will be injected here -->
+        <div class="nav-left">
+            <div class="logo" id="logo-btn" tabindex="0" role="button">
+                <span class="logo-v">D</span>ERT
             </div>
-          </li>
-          <li class="nav-link" data-page="mylist" tabindex="0" role="button">
-            My List
-          </li>
-        </ul>
-        <div
-          class="mobile-menu-btn"
-          id="mobile-menu-btn"
-          tabindex="0"
-          role="button"
-        >
-          <span>Browse</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M7 10l5 5 5-5z" />
-          </svg>
-        </div>
-      </div>
-      <div class="nav-right">
-        <div class="search-wrapper" id="search-wrapper">
-          <button
-            class="search-btn"
-            id="search-btn"
-            title="Search"
-            aria-label="Search"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <line x1="16.5" y1="16.5" x2="22" y2="22" />
-            </svg>
-          </button>
-          <input
-            type="text"
-            id="search-input"
-            aria-label="Search movies, TV shows, and people"
-            placeholder="Titles, people, genres"
-            spellcheck="false"
-            autocomplete="off"
-          />
-          <button
-            class="search-clear"
-            id="search-clear"
-            title="Clear search"
-            aria-label="Clear search"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-          <div class="search-suggestions" id="search-suggestions"></div>
-        </div>
-        <button
-          class="nav-icon-btn"
-          title="Notifications"
-          aria-label="Notifications"
-          style="position: relative"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
-          <span class="nav-notif-badge">3</span>
-        </button>
-        <div class="nav-avatar" id="nav-avatar" tabindex="0" role="button">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png"
-            alt="Profile"
-          />
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            class="avatar-caret"
-          >
-            <path d="M7 10l5 5 5-5z" />
-          </svg>
-          <div class="account-dropdown" id="account-dropdown">
-            <div class="account-header">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png"
-                alt="Profile"
-              />
-              <div class="account-info">
-                <span class="account-name">Viewer</span>
-                <span class="account-sub">Manage Profile</span>
-              </div>
+            <ul class="nav-links" id="nav-links">
+                <li class="nav-link active" data-page="home" tabindex="0" role="button">Home</li>
+                <li class="nav-link-dropdown" id="filter-wrapper">
+                    <span class="nav-link" id="filter-btn" tabindex="0" role="button">Filter <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" class="filter-caret"><path d="M7 10l5 5 5-5z" /></svg></span>
+                    <div class="filter-dropdown" id="filter-dropdown">
+                        <!-- Genres will be injected here -->
+                    </div>
+                </li>
+                <li class="nav-link" data-page="mylist" tabindex="0" role="button">My List</li>
+            </ul>
+            <div class="mobile-menu-btn" id="mobile-menu-btn" tabindex="0" role="button">
+                <span>Browse</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 10l5 5 5-5z" />
+                </svg>
             </div>
-            <div class="account-divider"></div>
-            <button class="account-item" id="settings-clear-history">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <polyline points="1 4 1 10 7 10" />
-                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-              </svg>
-              <span>Reset Watch History</span>
-            </button>
-            <button class="account-item" id="settings-clear-progress">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-              <span>Reset Progress</span>
-            </button>
-            <button class="account-item" id="settings-clear-list">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-              </svg>
-              <span>Clear My List</span>
-            </button>
-            <button class="account-item" id="settings-clear-cache">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <path
-                  d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zM11.5 12.5L16 8"
-                />
-                <path d="M16 8l5-1-1 5" />
-              </svg>
-              <span>Clear Cache</span>
-            </button>
-            <button class="account-item" id="settings-sync">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <path d="M4 4v5h5" />
-                <path d="M20 20v-5h-5" />
-                <path
-                  d="M20.49 9A9 9 0 0 0 5.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 0 1 3.51 15"
-                />
-              </svg>
-              <span>Sync Data</span>
-            </button>
-            <button class="account-item" id="settings-toggle-player">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-              <span id="player-source-text">Player: VidEasy</span>
-            </button>
-            <div class="account-divider"></div>
-            <button class="account-item" id="settings-about">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-              <span>About Dert</span>
-            </button>
-            <div class="account-version">v1.0.0 · Powered by TMDB</div>
-          </div>
         </div>
-      </div>
+        <div class="nav-right">
+            <div class="search-wrapper" id="search-wrapper">
+                <button class="search-btn" id="search-btn" title="Search" aria-label="Search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7" />
+                        <line x1="16.5" y1="16.5" x2="22" y2="22" />
+                    </svg>
+                </button>
+                <input type="text" id="search-input" aria-label="Search movies, TV shows, and people" placeholder="Titles, people, genres" spellcheck="false"
+                    autocomplete="off">
+                <button class="search-clear" id="search-clear" title="Clear search" aria-label="Clear search">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+                <div class="search-suggestions" id="search-suggestions"></div>
+            </div>
+            <button class="nav-icon-btn" title="Notifications" aria-label="Notifications">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+            </button>
+            <div class="nav-avatar" id="nav-avatar" tabindex="0" role="button">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Profile">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="avatar-caret">
+                    <path d="M7 10l5 5 5-5z" />
+                </svg>
+                <div class="account-dropdown" id="account-dropdown">
+                    <div class="account-header">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Profile">
+                        <div class="account-info">
+                            <span class="account-name">Viewer</span>
+                            <span class="account-sub">Manage Profile</span>
+                        </div>
+                    </div>
+                    <div class="account-divider"></div>
+                    <button class="account-item" id="settings-clear-history">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <polyline points="1 4 1 10 7 10" />
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                        </svg>
+                        <span>Reset Watch History</span>
+                    </button>
+                    <button class="account-item" id="settings-clear-progress">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        <span>Reset Progress</span>
+                    </button>
+                    <button class="account-item" id="settings-clear-list">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span>Clear My List</span>
+                    </button>
+                    <button class="account-item" id="settings-clear-cache">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <path
+                                d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zM11.5 12.5L16 8" />
+                            <path d="M16 8l5-1-1 5" />
+                        </svg>
+                        <span>Clear Cache</span>
+                    </button>
+                    <button class="account-item" id="settings-sync">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <path d="M4 4v5h5" />
+                            <path d="M20 20v-5h-5" />
+                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 0 1 3.51 15" />
+                        </svg>
+                        <span>Sync Data</span>
+                    </button>
+                    <button class="account-item" id="settings-toggle-player">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <span id="player-source-text">Player: VidEasy</span>
+                    </button>
+                    <div class="account-divider"></div>
+                    <button class="account-item" id="settings-about">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                        <span>About Dert</span>
+                    </button>
+                    <div class="account-version">v1.0.0 · Powered by TMDB</div>
+                </div>
+            </div>
+        </div>
     </nav>
 
     <div class="mobile-dropdown" id="mobile-dropdown">
-      <div
-        class="mobile-dropdown-item active"
-        data-page="home"
-        tabindex="0"
-        role="button"
-      >
-        Home
-      </div>
-      <div
-        class="mobile-dropdown-item"
-        data-page="filter"
-        tabindex="0"
-        role="button"
-      >
-        Filter
-      </div>
-      <div
-        class="mobile-dropdown-item"
-        data-page="mylist"
-        tabindex="0"
-        role="button"
-      >
-        My List
-      </div>
+        <div class="mobile-dropdown-item active" data-page="home" tabindex="0" role="button">Home</div>
+        <div class="mobile-dropdown-item" data-page="filter" tabindex="0" role="button">Filter</div>
+        <div class="mobile-dropdown-item" data-page="mylist" tabindex="0" role="button">My List</div>
     </div>
 
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-      <div
-        class="bottom-nav-item active"
-        data-page="home"
-        tabindex="0"
-        role="button"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        </svg>
-        <span>Home</span>
-      </div>
-      <div
-        class="bottom-nav-item"
-        data-page="filter-mobile"
-        id="mobile-filter-trigger"
-        tabindex="0"
-        role="button"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-        </svg>
-        <span>Filter</span>
-      </div>
-      <div
-        class="bottom-nav-item"
-        data-page="mylist"
-        tabindex="0"
-        role="button"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-        </svg>
-        <span>My List</span>
-      </div>
+        <div class="bottom-nav-item active" data-page="home" tabindex="0" role="button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            </svg>
+            <span>Home</span>
+        </div>
+        <div class="bottom-nav-item" data-page="filter-mobile" id="mobile-filter-trigger" tabindex="0" role="button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            <span>Filter</span>
+        </div>
+        <div class="bottom-nav-item" data-page="mylist" tabindex="0" role="button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>My List</span>
+        </div>
     </nav>
 
-    <div class="hero-wrapper">
-      <header id="hero">
+    <header id="hero">
         <div class="hero-vignette"></div>
         <div class="hero-bottom-fade"></div>
-        <div class="hero-top-right-actions">
-          <button
-            class="hero-sound-btn"
-            id="hero-sound-btn"
-            title="Toggle Sound"
-            aria-label="Toggle Sound"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-              <path
-                d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
-              ></path>
-            </svg>
-          </button>
-        </div>
         <div class="hero-content">
-          <div class="hero-title-area">
-            <div class="hero-content-type" id="hero-badge">
-              <span id="hero-type-text">Movie</span>
+            <div class="hero-title-area">
+                <div class="hero-content-type" id="hero-badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4 4h16v16H4z" opacity=".3" />
+                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z" />
+                    </svg>
+                    <span id="hero-type-text">Movie</span>
+                </div>
+                <h1 class="hero-title" id="hero-title"></h1>
             </div>
-            <h1 class="hero-title" id="hero-title"></h1>
-          </div>
-          <div class="hero-metadata" id="hero-metadata"></div>
-          <p class="hero-overview" id="hero-overview"></p>
-          <div class="hero-actions">
-            <button class="btn-hero btn-white" id="hero-play-btn">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M6 4l15 8-15 8z" />
-              </svg>
-              <span>Play</span>
-            </button>
-            <button class="btn-hero btn-gray" id="hero-info-btn">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-              <span>More Info</span>
-            </button>
-          </div>
+            <div class="hero-metadata" id="hero-metadata"></div>
+            <p class="hero-overview" id="hero-overview"></p>
+            <div class="hero-actions">
+                <button class="btn-hero btn-white" id="hero-play-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 4l15 8-15 8z" />
+                    </svg>
+                    <span>Play</span>
+                </button>
+                <button class="btn-hero btn-gray" id="hero-info-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    <span>More Info</span>
+                </button>
+            </div>
         </div>
-        <div class="hero-bottom-right-badge" id="hero-feature-badge">
-          <span class="hero-badge-pill"> We think you'll love this!</span>
+        <div class="hero-age-rating" id="hero-age">
+            <div class="age-divider"></div>
+            <span class="age-text">TV-MA</span>
         </div>
-      </header>
-    </div>
+    </header>
 
     <section class="page-section search-page" id="search-page">
-      <div class="page-inner">
-        <h2 class="page-heading" id="search-heading">Search Results</h2>
-        <div class="card-grid" id="search-grid"></div>
-        <div id="infinite-scroll-sentinel"></div>
-        <div id="search-loading" class="loading-spinner-wrap">
-          <div class="spinner"></div>
+        <div class="page-inner">
+            <h2 class="page-heading" id="search-heading">Search Results</h2>
+            <div class="card-grid" id="search-grid"></div>
+            <div id="infinite-scroll-sentinel"></div>
+            <div id="search-loading" class="loading-spinner-wrap">
+                <div class="spinner"></div>
+            </div>
         </div>
-      </div>
     </section>
 
     <section class="page-section mylist-page" id="mylist-page">
-      <div class="page-inner">
-        <h2 class="page-heading">My List</h2>
-        <div class="card-grid" id="mylist-grid"></div>
-        <div class="empty-state" id="mylist-empty">
-          <svg
-            width="60"
-            height="60"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#555"
-            stroke-width="1"
-          >
-            <path
-              d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"
-            />
-          </svg>
-          <h3>Your list is empty</h3>
-          <p>Add movies and shows that you want to watch later</p>
-          <button
-            class="btn-hero btn-white"
-            style="margin-top: 20px"
-            onclick="navTo('home')"
-          >
-            Browse Content
-          </button>
+        <div class="page-inner">
+            <h2 class="page-heading">My List</h2>
+            <div class="card-grid" id="mylist-grid"></div>
+            <div class="empty-state" id="mylist-empty">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1">
+                    <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z" />
+                </svg>
+                <h3>Your list is empty</h3>
+                <p>Add movies and shows that you want to watch later</p>
+                <button class="btn-hero btn-white" style="margin-top: 20px;" onclick="navTo('home')">Browse Content</button>
+            </div>
         </div>
-      </div>
     </section>
 
     <main id="main-rows"></main>
 
     <footer>
-      <p class="footer-copy">
-        © <span id="footer-year">2026</span> Dert~uwu Powered by TMDB
-      </p>
-      <script>
-        document.getElementById("footer-year").textContent =
-          new Date().getFullYear();
-      </script>
+        <p class="footer-copy">© <span id="footer-year">2026</span> Dert~uwu Powered by TMDB</p>
+        <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
     </footer>
 
     <div class="detail-overlay" id="detail-overlay">
-      <div class="detail-modal" id="detail-modal">
-        <div class="modal-handle"></div>
-        <button
-          class="modal-close"
-          id="detail-close-btn"
-          title="Close"
-          aria-label="Close details"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-        <div class="detail-hero" id="detail-hero">
-          <div class="detail-hero-fade"></div>
-          <div class="detail-hero-inner">
-            <h1 class="detail-hero-title" id="detail-title"></h1>
-            <div class="detail-hero-buttons">
-              <button class="btn-hero btn-white" id="detail-play-btn">
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M6 4l15 8-15 8z" />
+        <div class="detail-modal" id="detail-modal">
+            <div class="modal-handle"></div>
+            <button class="modal-close" id="detail-close-btn" title="Close" aria-label="Close details">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
-                <span>Play</span>
-              </button>
-              <button
-                class="circle-action"
-                id="detail-list-btn"
-                title="Add to My List"
-                aria-label="Add to My List"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
-              <div class="rating-control" id="detail-rating-control">
-                <button
-                  class="circle-action"
-                  id="detail-like-btn"
-                  title="Rate"
-                  aria-label="Rate"
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
-                    />
-                  </svg>
-                </button>
-                <div class="rating-menu" id="detail-rating-menu">
-                  <button data-rating="dislike">Dislike this</button>
-                  <button data-rating="like">Like this</button>
-                  <button data-rating="love">Love this</button>
+            </button>
+            <div class="detail-hero" id="detail-hero">
+                <div class="detail-hero-fade"></div>
+                <div class="detail-hero-inner">
+                    <h1 class="detail-hero-title" id="detail-title"></h1>
+                    <div class="detail-hero-buttons">
+                        <button class="btn-hero btn-white" id="detail-play-btn">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 4l15 8-15 8z" />
+                            </svg>
+                            <span>Play</span>
+                        </button>
+                        <button class="circle-action" id="detail-list-btn" title="Add to My List" aria-label="Add to My List">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        </button>
+                        <div class="rating-control" id="detail-rating-control">
+                            <button class="circle-action" id="detail-like-btn" title="Rate" aria-label="Rate">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                                </svg>
+                            </button>
+                            <div class="rating-menu" id="detail-rating-menu">
+                                <button data-rating="dislike">Dislike this</button>
+                                <button data-rating="like">Like this</button>
+                                <button data-rating="love">Love this</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-          </div>
+            <div class="detail-body">
+                <div class="detail-columns">
+                    <div class="detail-col-main">
+                        <div class="detail-meta" id="detail-meta"></div>
+                        <p class="detail-desc" id="detail-overview"></p>
+                    </div>
+                    <div class="detail-col-side">
+                        <p class="detail-tag" id="detail-cast-line"></p>
+                        <p class="detail-tag" id="detail-genre-line"></p>
+                    </div>
+                </div>
+                <div class="episodes-section" id="episodes-section">
+                    <div class="episodes-top">
+                        <h3>Episodes</h3>
+                        <select id="season-picker"></select>
+                    </div>
+                    <div class="ep-list" id="episodes-list"></div>
+                </div>
+                <div class="similar-section" id="similar-section">
+                    <h3>More Like This</h3>
+                    <div class="similar-grid" id="similar-grid"></div>
+                </div>
+                <div class="about-section" id="about-section">
+                    <h3>About <span id="about-title"></span></h3>
+                    <div id="about-details"></div>
+                </div>
+            </div>
         </div>
-        <div class="detail-body">
-          <div class="detail-columns">
-            <div class="detail-col-main">
-              <div class="detail-meta" id="detail-meta"></div>
-              <p class="detail-desc" id="detail-overview"></p>
-            </div>
-            <div class="detail-col-side">
-              <p class="detail-tag" id="detail-cast-line"></p>
-              <p class="detail-tag" id="detail-genre-line"></p>
-            </div>
-          </div>
-          <div class="episodes-section" id="episodes-section">
-            <div class="episodes-top">
-              <h3>Episodes</h3>
-              <select id="season-picker"></select>
-            </div>
-            <div class="ep-list" id="episodes-list"></div>
-          </div>
-          <div class="similar-section" id="similar-section">
-            <h3>More Like This</h3>
-            <div class="similar-grid" id="similar-grid"></div>
-          </div>
-          <div class="about-section" id="about-section">
-            <h3>About <span id="about-title"></span></h3>
-            <div id="about-details"></div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="player-overlay" id="player-overlay">
-      <button class="player-back" id="player-back-btn">
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-        >
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-        <span>Back to Browse</span>
-      </button>
-      <div class="player-frame-wrap">
-        <div id="player-frame"></div>
-      </div>
+        <button class="player-back" id="player-back-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round">
+                <polyline points="15 18 9 12 15 6" />
+            </svg>
+            <span>Back to Browse</span>
+        </button>
+        <div class="player-frame-wrap">
+            <div id="player-frame"></div>
+        </div>
     </div>
 
     <div class="sync-overlay" id="sync-overlay">
-      <div class="sync-modal">
-        <button
-          class="sync-close"
-          id="sync-close"
-          title="Close"
-          aria-label="Close sync modal"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-        <div class="sync-header">
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#e50914"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <path d="M4 4v5h5" />
-            <path d="M20 20v-5h-5" />
-            <path
-              d="M20.49 9A9 9 0 0 0 5.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 0 1 3.51 15"
-            />
-          </svg>
-          <h3>Sync Data</h3>
-        </div>
-        <p class="sync-desc">
-          Transfer your watch history, progress, and list between devices using
-          a 6-digit PIN.
-        </p>
-        <div class="sync-tabs">
-          <button class="sync-tab active" data-tab="export">Send</button>
-          <button class="sync-tab" data-tab="import">Receive</button>
-        </div>
-        <div class="sync-panel" id="sync-export-panel">
-          <div
-            class="sync-pin-display"
-            id="sync-pin-display"
-            tabindex="0"
-            role="button"
-            aria-label="Generated Sync PIN. Click to copy"
-          >
-            ------
-          </div>
-          <p class="sync-pin-hint">Enter this PIN on your other device</p>
-          <p class="sync-pin-timer" id="sync-pin-timer"></p>
-          <div class="sync-actions">
-            <button class="sync-btn sync-btn-primary" id="sync-generate">
-              Generate PIN
+        <div class="sync-modal">
+            <button class="sync-close" id="sync-close" title="Close" aria-label="Close sync modal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
             </button>
-          </div>
+            <div class="sync-header">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e50914" stroke-width="2"
+                    stroke-linecap="round">
+                    <path d="M4 4v5h5" />
+                    <path d="M20 20v-5h-5" />
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 0 1 3.51 15" />
+                </svg>
+                <h3>Sync Data</h3>
+            </div>
+            <p class="sync-desc">Transfer your watch history, progress, and list between devices using a 6-digit PIN.
+            </p>
+            <div class="sync-tabs">
+                <button class="sync-tab active" data-tab="export">Send</button>
+                <button class="sync-tab" data-tab="import">Receive</button>
+            </div>
+            <div class="sync-panel" id="sync-export-panel">
+                <div class="sync-pin-display" id="sync-pin-display" tabindex="0" role="button" aria-label="Generated Sync PIN. Click to copy">------</div>
+                <p class="sync-pin-hint">Enter this PIN on your other device</p>
+                <p class="sync-pin-timer" id="sync-pin-timer"></p>
+                <div class="sync-actions">
+                    <button class="sync-btn sync-btn-primary" id="sync-generate">Generate PIN</button>
+                </div>
+                <div class="sync-status" id="sync-export-status"></div>
+            </div>
+            <div class="sync-panel hidden" id="sync-import-panel">
+                <div class="sync-code-input-wrap" id="sync-code-wrap">
+                    <input type="text" class="sync-code-input" id="sync-import-code" aria-label="6-digit sync PIN" maxlength="6" inputmode="numeric"
+                        pattern="[0-9]*" placeholder="000000" autocomplete="off">
+                    <button class="sync-code-clear" id="sync-code-clear" title="Clear PIN" aria-label="Clear PIN">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="sync-actions">
+                    <button class="sync-btn sync-btn-primary" id="sync-import-btn">Sync</button>
+                </div>
+                <div class="sync-status" id="sync-import-status"></div>
+            </div>
         </div>
-        <div class="sync-panel hidden" id="sync-import-panel">
-          <div class="sync-code-input-wrap" id="sync-code-wrap">
-            <input
-              type="text"
-              class="sync-code-input"
-              id="sync-import-code"
-              placeholder="000000"
-              maxlength="6"
-              inputmode="numeric"
-              autocomplete="off"
-              aria-label="Enter 6-digit sync PIN"
-            />
-            <button
-              class="sync-code-clear"
-              id="sync-code-clear"
-              title="Clear PIN"
-              aria-label="Clear PIN"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-          <p class="sync-pin-hint">
-            Enter the PIN generated from your primary device
-          </p>
-          <div class="sync-actions">
-            <button class="sync-btn sync-btn-primary" id="sync-import-btn">
-              Sync Data
-            </button>
-          </div>
-          <div class="sync-status" id="sync-import-status"></div>
-        </div>
-        <div class="sync-status" id="sync-export-status"></div>
-      </div>
     </div>
 
     <div class="account-toast" id="account-toast"></div>
 
     <div class="loader-overlay" id="loader-screen">
-      <div class="loader-inner">
-        <div class="loader-logo"><span>D</span>ERT</div>
-        <div class="loader-bar">
-          <div class="loader-bar-fill"></div>
+        <div class="loader-inner">
+            <div class="loader-logo"><span>D</span>ERT</div>
+            <div class="loader-bar">
+                <div class="loader-bar-fill"></div>
+            </div>
         </div>
-      </div>
     </div>
 
     <script src="script.js"></script>
-  </body>
+</body>
+
 </html>
