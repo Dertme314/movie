@@ -1138,6 +1138,7 @@ function playContent(item, season, episode, updateUrl = true) {
 }
 
 function destroyPlayerFrame() {
+  ignoreProgress = true;
   const wrap = document.getElementById("player-frame");
   const iframe = wrap.querySelector("iframe");
   if (iframe) {
@@ -1488,20 +1489,61 @@ async function buildTasteRow() {
 }
 
 function saveProgress(data) {
+  if (!data || !data.id || !data.mediaType) return;
+  const id = String(data.id);
+  const mediaType = data.mediaType;
+
+  const existing =
+    getProgress(id, mediaType, data.season, data.episode) ||
+    getProgress(id, mediaType);
+
+  const newCurrentTime =
+    typeof data.currentTime === "number" ? data.currentTime : data.currentTime || 0;
+  const newDuration =
+    typeof data.duration === "number" ? data.duration : data.duration || 0;
+  const newProgress =
+    typeof data.progress === "number" ? data.progress : data.progress || 0;
+
+  // Protect against overwriting valid saved progress with initial 0/near-0 values when player first mounts
+  if (
+    existing &&
+    existing.currentTime > 5 &&
+    newCurrentTime < 3 &&
+    newProgress < 1
+  ) {
+    return;
+  }
+
   const payload = {
-    id: String(data.id),
-    mediaType: data.mediaType,
-    currentTime: data.currentTime || 0,
-    duration: data.duration || 0,
-    progress: data.progress || 0,
-    season: data.season || null,
-    episode: data.episode || null,
+    id: id,
+    mediaType: mediaType,
+    currentTime:
+      newCurrentTime > 0
+        ? newCurrentTime
+        : existing
+        ? existing.currentTime || 0
+        : 0,
+    duration:
+      newDuration > 0
+        ? newDuration
+        : existing
+        ? existing.duration || 0
+        : 0,
+    progress:
+      newProgress > 0
+        ? newProgress
+        : existing
+        ? existing.progress || 0
+        : 0,
+    season: data.season || (existing ? existing.season : null),
+    episode: data.episode || (existing ? existing.episode : null),
     updatedAt: Date.now(),
   };
-  const showKey = `vk_p_${data.mediaType}_${data.id}`;
+
+  const showKey = `vk_p_${mediaType}_${id}`;
   localStorage.setItem(showKey, JSON.stringify(payload));
-  if (data.mediaType === "tv" && data.season && data.episode) {
-    const epKey = `vk_p_tv_${data.id}_s${data.season}_e${data.episode}`;
+  if (mediaType === "tv" && payload.season && payload.episode) {
+    const epKey = `vk_p_tv_${id}_s${payload.season}_e${payload.episode}`;
     localStorage.setItem(epKey, JSON.stringify(payload));
   }
 }
