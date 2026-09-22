@@ -1,8 +1,41 @@
 const IMG = "https://image.tmdb.org/t/p";
-const VIDKING = "https://www.vidking.net/embed";
-const VIDKING_ORIGIN = "https://www.vidking.net";
-const VIDEASY = "https://player.videasy.net";
-let playerSource = localStorage.getItem("vk_player") || "videasy";
+
+const VIDY_BASE = "https://www.vidy.st";
+const VIDSRC_BASE = "https://vidsrc.sbs";
+
+const PROVIDERS = {
+  vidy: {
+    label: "Vidy",
+    buildUrl({ type, id, season, episode, progress, color }) {
+      const progressParam =
+        progress > 5 ? `&progress=${Math.floor(progress)}` : "";
+      if (type === "tv") {
+        return `${VIDY_BASE}/tv/${id}/${season}/${episode}?color=${color}&autoplay=true&nextEpisode=true&episodeSelector=true&autoplayNextEpisode=true${progressParam}`;
+      }
+      return `${VIDY_BASE}/movie/${id}?color=${color}&autoplay=true${progressParam}`;
+    },
+  },
+  vidsrc: {
+    label: "VidSrc",
+    buildUrl({ type, id, season, episode, progress, color }) {
+      const resumeParam = progress > 5 ? `&t=${Math.floor(progress)}` : "";
+      if (type === "tv") {
+        return `${VIDSRC_BASE}/embed/tv/${id}/${season}/${episode}?autoplay=1&color=${color}${resumeParam}`;
+      }
+      return `${VIDSRC_BASE}/embed/movie/${id}?autoplay=1&color=${color}${resumeParam}`;
+    },
+  },
+};
+
+function resolvePlayerSource() {
+  const stored = localStorage.getItem("vk_player");
+  if (stored && PROVIDERS[stored]) return stored;
+  // Legacy values (videasy/vidking) or unknown values fall back to Vidy
+  localStorage.setItem("vk_player", "vidy");
+  return "vidy";
+}
+
+let playerSource = resolvePlayerSource();
 
 const IS_LOCAL =
   location.hostname === "localhost" ||
@@ -212,6 +245,7 @@ let searchPage = 1;
 let filterPage = 1;
 let isFetchingMore = false;
 let ignoreProgress = false;
+let nowPlaying = null;
 
 const CACHE_TTL = 30 * 60 * 1000;
 
@@ -1076,6 +1110,19 @@ async function fetchEps(tvId, sNum) {
   }
 }
 
+function getResumePosition(id, type, season, episode) {
+  const exact =
+    type === "tv" ? getProgress(id, type, season, episode) : getProgress(id, type);
+  const pr = exact || (type === "tv" ? getProgress(id, type) : null);
+  if (!pr || !(pr.currentTime > 5) || (pr.progress || 0) >= 95) return 0;
+  if (type === "tv" && !exact) {
+    // Show-level entry only counts if it points at this same episode
+    if (Number(pr.season) !== Number(season) || Number(pr.episode) !== Number(episode))
+      return 0;
+  }
+  return pr.currentTime;
+}
+
 function playContent(item, season, episode, updateUrl = true) {
   if (!item) return;
   saveHistory(item);
@@ -1093,22 +1140,18 @@ function playContent(item, season, episode, updateUrl = true) {
   const s = season || 1;
   const e = episode || 1;
 
-  let url;
-  const isVidking = playerSource === "vidking";
+  const resumeAt = getResumePosition(item.id, item.type, s, e);
+  const provider = PROVIDERS[playerSource] || PROVIDERS.vidy;
+  const url = provider.buildUrl({
+    type: item.type,
+    id: item.id,
+    season: s,
+    episode: e,
+    progress: resumeAt,
+    color: "e50914",
+  });
 
-  if (item.type === "tv") {
-    if (isVidking) {
-      url = `${VIDKING}/tv/${item.id}/${s}/${e}?color=e50914&autoPlay=true&nextEpisode=true&episodeSelector=true`;
-    } else {
-      url = `${VIDEASY}/tv/${item.id}/${s}/${e}?color=e50914&autoplayNextEpisode=true&nextEpisode=true&episodeSelector=true`;
-    }
-  } else {
-    if (isVidking) {
-      url = `${VIDKING}/movie/${item.id}?color=e50914&autoPlay=true`;
-    } else {
-      url = `${VIDEASY}/movie/${item.id}?color=e50914`;
-    }
-  }
+  nowPlaying = { id: item.id, type: item.type, season: s, episode: e };
 
   closeDetail(false);
 
@@ -1130,7 +1173,7 @@ function playContent(item, season, episode, updateUrl = true) {
 
   setTimeout(() => {
     const frame = document.getElementById("player-frame");
-    frame.innerHTML = `<iframe src="${url}" allowfullscreen allow="autoplay;fullscreen;encrypted-media;picture-in-picture"></iframe>`;
+    frame.innerHTML = `<iframe src="${url}" allowfullscreen allow="encrypted-media; autoplay *; fullscreen *"></iframe>`;
   }, 150);
 
   document.getElementById("player-overlay").classList.add("active");
@@ -1139,12 +1182,10 @@ function playContent(item, season, episode, updateUrl = true) {
 
 function destroyPlayerFrame() {
   ignoreProgress = true;
+  nowPlaying = null;
   const wrap = document.getElementById("player-frame");
   const iframe = wrap.querySelector("iframe");
   if (iframe) {
-    try {
-      iframe.contentWindow.postMessage('{"type":"PAUSE"}', "*");
-    } catch (_) {}
     iframe.src = "about:blank";
     iframe.remove();
   }
@@ -1794,7 +1835,45 @@ function wireListeners() {
 
     try {
       const msg = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data;
-      if (msg?.type === "PLAYER_EVENT" && msg.data) saveProgress(msg.data);
+      if (!msg || typeof msg !== "object") return;
+
+      // Vidy: serialized local history about once a second
+      if (msg.type === "MEDIA_DATA" && msg.data) {
+        const hist = typeof msg.data === "string" ? JSON.parse(msg.data) : msg.data;
+        if (hist && hist.id && hist.mediaType) saveProgress(hist);
+        return;
+      }
+
+      // Vidy: playback lifecycle events — merge with the item we mounted
+      if (
+        msg.type === "PLAYER_EVENT" &&
+        nowPlaying &&
+        (msg.event === "timeupdate" ||
+          msg.event === "play" ||
+          msg.event === "pause" ||
+          msg.event === "ended")
+      ) {
+        const currentTime =
+          typeof msg.currentTime === "number" && msg.currentTime > 0
+            ? msg.currentTime
+            : 0;
+        const duration =
+          typeof msg.duration === "number" && msg.duration > 0 ? msg.duration : 0;
+        saveProgress({
+          id: nowPlaying.id,
+          mediaType: nowPlaying.type,
+          season: nowPlaying.season,
+          episode: nowPlaying.episode,
+          currentTime,
+          duration,
+          progress:
+            duration > 0
+              ? Math.min(100, (currentTime / duration) * 100)
+              : msg.event === "ended"
+                ? 100
+                : 0,
+        });
+      }
     } catch (_) {}
   });
 
@@ -1922,7 +2001,7 @@ function wireSettingsActions() {
     const dd = document.getElementById("account-dropdown");
     dd.classList.remove("open");
     document.getElementById("nav-avatar").classList.remove("open");
-    showToast("Dert v1.0.0 — Free movie streaming powered by TMDB & Vidking");
+    showToast("Dert v1.0.0 — Free movie streaming powered by TMDB, Vidy & VidSrc");
   };
 
   document.getElementById("settings-sync").onclick = (e) => {
@@ -1932,22 +2011,21 @@ function wireSettingsActions() {
     openSyncModal();
   };
 
+  const providerLabel = () => (PROVIDERS[playerSource] || PROVIDERS.vidy).label;
+
   const playerText = document.getElementById("player-source-text");
-  if (playerText)
-    playerText.textContent =
-      playerSource === "vidking" ? "Player: VidKing" : "Player: VidEasy";
+  if (playerText) playerText.textContent = `Player: ${providerLabel()}`;
 
   const playerToggleBtn = document.getElementById("settings-toggle-player");
   if (playerToggleBtn) {
     playerToggleBtn.onclick = (e) => {
       e.stopPropagation();
-      playerSource = playerSource === "vidking" ? "videasy" : "vidking";
+      const ids = Object.keys(PROVIDERS);
+      const next = ids[(ids.indexOf(playerSource) + 1) % ids.length];
+      playerSource = PROVIDERS[next] ? next : "vidy";
       localStorage.setItem("vk_player", playerSource);
-      playerText.textContent =
-        playerSource === "vidking" ? "Player: VidKing" : "Player: VidEasy";
-      showToast(
-        `Player set to ${playerSource === "vidking" ? "VidKing" : "VidEasy"}`,
-      );
+      if (playerText) playerText.textContent = `Player: ${providerLabel()}`;
+      showToast(`Player set to ${providerLabel()}`);
     };
   }
 }
