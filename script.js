@@ -55,6 +55,10 @@ function resolvePlayerSource() {
 
 let playerSource = resolvePlayerSource();
 
+function providerLabel() {
+  return (PROVIDERS[playerSource] || PROVIDERS.vidlink || PROVIDERS.vidy).label;
+}
+
 const IS_LOCAL =
   location.hostname === "localhost" ||
   location.hostname === "127.0.0.1" ||
@@ -265,6 +269,50 @@ let isFetchingMore = false;
 let ignoreProgress = false;
 let nowPlaying = null;
 let isPlayerOpen = false;
+let playerTipTimer = null;
+
+function resetPlayerTipTimer(delay = 9000) {
+  if (playerTipTimer) clearTimeout(playerTipTimer);
+  playerTipTimer = setTimeout(() => {
+    const topActions = document.querySelector(".player-top-actions");
+    if (topActions) topActions.classList.add("faded");
+  }, delay);
+}
+
+function cyclePlayerSource(reloadIfPlaying = true) {
+  const ids = Object.keys(PROVIDERS);
+  const next = ids[(ids.indexOf(playerSource) + 1) % ids.length];
+  playerSource = PROVIDERS[next] ? next : "vidlink";
+  localStorage.setItem("vk_player", playerSource);
+
+  const lbl = providerLabel();
+  const playerText = document.getElementById("player-source-text");
+  if (playerText) playerText.textContent = `Player: ${lbl}`;
+  const quickText = document.getElementById("player-quick-source-text");
+  if (quickText) quickText.textContent = `Player: ${lbl}`;
+
+  showToast(`Player set to ${lbl}`);
+
+  if (reloadIfPlaying && nowPlaying && isPlayerOpen) {
+    const s = nowPlaying.season || 1;
+    const e = nowPlaying.episode || 1;
+    const resumeAt = getResumePosition(nowPlaying.id, nowPlaying.type, s, e);
+    const provider = PROVIDERS[playerSource] || PROVIDERS.vidlink || PROVIDERS.vidy;
+    const url = provider.buildUrl({
+      type: nowPlaying.type,
+      id: nowPlaying.id,
+      season: s,
+      episode: e,
+      progress: resumeAt,
+      color: "e50914",
+    });
+
+    const frame = document.getElementById("player-frame");
+    if (frame) {
+      frame.innerHTML = `<iframe src="${url}" allow="encrypted-media; autoplay *; fullscreen *; picture-in-picture"></iframe>`;
+    }
+  }
+}
 
 const CACHE_TTL = 30 * 60 * 1000;
 
@@ -1194,8 +1242,17 @@ function playContent(item, season, episode, updateUrl = true) {
 
   setTimeout(() => {
     const frame = document.getElementById("player-frame");
-    frame.innerHTML = `<iframe src="${url}" allowfullscreen allow="encrypted-media; autoplay *; fullscreen *; picture-in-picture"></iframe>`;
+    frame.innerHTML = `<iframe src="${url}" allow="encrypted-media; autoplay *; fullscreen *; picture-in-picture"></iframe>`;
   }, 150);
+
+  const quickText = document.getElementById("player-quick-source-text");
+  if (quickText) quickText.textContent = `Player: ${providerLabel()}`;
+
+  const topActions = document.querySelector(".player-top-actions");
+  if (topActions) {
+    topActions.classList.remove("faded");
+    resetPlayerTipTimer(4000);
+  }
 
   document.getElementById("player-overlay").classList.add("active");
   document.body.style.overflow = "hidden";
@@ -1216,6 +1273,7 @@ function destroyPlayerFrame() {
 
 function closePlayer(updateUrl = true) {
   isPlayerOpen = false;
+  if (playerTipTimer) clearTimeout(playerTipTimer);
   ignoreProgress = true;
   destroyPlayerFrame();
   document.getElementById("player-overlay").classList.remove("active");
@@ -1843,6 +1901,43 @@ function wireListeners() {
 
   document.getElementById("player-back-btn").onclick = closePlayer;
 
+  const quickSourceBtn = document.getElementById("player-quick-source-btn");
+  if (quickSourceBtn) {
+    quickSourceBtn.onclick = (e) => {
+      e.stopPropagation();
+      cyclePlayerSource(true);
+    };
+  }
+
+  const tipSwitchBtn = document.getElementById("player-tip-switch-btn");
+  if (tipSwitchBtn) {
+    tipSwitchBtn.onclick = (e) => {
+      e.stopPropagation();
+      cyclePlayerSource(true);
+      resetPlayerTipTimer(4000);
+    };
+  }
+
+  const tipCloseBtn = document.getElementById("player-tip-close-btn");
+  if (tipCloseBtn) {
+    tipCloseBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (playerTipTimer) clearTimeout(playerTipTimer);
+      const topActions = document.querySelector(".player-top-actions");
+      if (topActions) topActions.classList.add("faded");
+    };
+  }
+
+  const tipEl = document.querySelector(".player-top-actions");
+  if (tipEl) {
+    tipEl.onmouseenter = () => {
+      if (playerTipTimer) clearTimeout(playerTipTimer);
+    };
+    tipEl.onmouseleave = () => {
+      resetPlayerTipTimer(4000);
+    };
+  }
+
   document.onkeydown = (e) => {
     if (e.key !== "Escape") return;
     if (document.getElementById("player-overlay").classList.contains("active"))
@@ -2078,8 +2173,6 @@ function wireSettingsActions() {
     openSyncModal();
   };
 
-  const providerLabel = () => (PROVIDERS[playerSource] || PROVIDERS.vidlink || PROVIDERS.vidy).label;
-
   const playerText = document.getElementById("player-source-text");
   if (playerText) playerText.textContent = `Player: ${providerLabel()}`;
 
@@ -2087,12 +2180,7 @@ function wireSettingsActions() {
   if (playerToggleBtn) {
     playerToggleBtn.onclick = (e) => {
       e.stopPropagation();
-      const ids = Object.keys(PROVIDERS);
-      const next = ids[(ids.indexOf(playerSource) + 1) % ids.length];
-      playerSource = PROVIDERS[next] ? next : "vidlink";
-      localStorage.setItem("vk_player", playerSource);
-      if (playerText) playerText.textContent = `Player: ${providerLabel()}`;
-      showToast(`Player set to ${providerLabel()}`);
+      cyclePlayerSource(true);
     };
   }
 }

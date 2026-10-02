@@ -83,13 +83,13 @@
                 </svg>
             </button>
             <div class="nav-avatar" id="nav-avatar" tabindex="0" role="button">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Profile">
+                <img src="avatar.svg" alt="Profile">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="avatar-caret">
                     <path d="M7 10l5 5 5-5z" />
                 </svg>
                 <div class="account-dropdown" id="account-dropdown">
                     <div class="account-header">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="Profile">
+                        <img src="avatar.svg" alt="Profile">
                         <div class="account-info">
                             <span class="account-name">Viewer</span>
                             <span class="account-sub">Manage Profile</span>
@@ -342,6 +342,28 @@
             </svg>
             <span>Back to Browse</span>
         </button>
+        <div class="player-top-actions">
+            <div class="player-tip" id="player-tip">
+                <span class="player-tip-icon">💡</span>
+                <span class="player-tip-text">
+                    <span class="player-tip-long-text">Movie not loading? Try switching players</span>
+                    <span class="player-tip-short-text">Not loading? Try switching</span>
+                </span>
+                <button class="player-tip-switch" id="player-tip-switch-btn" type="button">Switch</button>
+                <button class="player-tip-close" id="player-tip-close-btn" type="button" aria-label="Dismiss tip" title="Dismiss tip">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <button class="player-source-btn" id="player-quick-source-btn" type="button" title="Click to switch streaming player">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span id="player-quick-source-text">Player: VidLink</span>
+            </button>
+        </div>
         <div class="player-frame-wrap">
             <div id="player-frame"></div>
         </div>
