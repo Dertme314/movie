@@ -1,9 +1,22 @@
 const IMG = "https://image.tmdb.org/t/p";
 
+const VIDLINK_BASE = "https://vidlink.pro";
 const VIDY_BASE = "https://www.vidy.st";
 const VIDSRC_BASE = "https://vidsrc.sbs";
 
 const PROVIDERS = {
+  vidlink: {
+    label: "VidLink",
+    buildUrl({ type, id, season, episode, progress, color }) {
+      const c = color || "e50914";
+      const resumeParam = progress > 5 ? `&startAt=${Math.floor(progress)}` : "";
+      const common = `primaryColor=${c}&secondaryColor=121212&iconColor=${c}&icons=vid&title=false&poster=true&autoplay=true&nextbutton=true${resumeParam}`;
+      if (type === "tv") {
+        return `${VIDLINK_BASE}/tv/${id}/${season}/${episode}?${common}`;
+      }
+      return `${VIDLINK_BASE}/movie/${id}?${common}`;
+    },
+  },
   vidy: {
     label: "Vidy",
     buildUrl({ type, id, season, episode, progress, color }) {
@@ -28,11 +41,16 @@ const PROVIDERS = {
 };
 
 function resolvePlayerSource() {
+  const migrated = localStorage.getItem("vk_player_default_vidlink_v1");
+  if (!migrated) {
+    localStorage.setItem("vk_player_default_vidlink_v1", "1");
+    localStorage.setItem("vk_player", "vidlink");
+    return "vidlink";
+  }
   const stored = localStorage.getItem("vk_player");
   if (stored && PROVIDERS[stored]) return stored;
-  // Legacy values (videasy/vidking) or unknown values fall back to Vidy
-  localStorage.setItem("vk_player", "vidy");
-  return "vidy";
+  localStorage.setItem("vk_player", "vidlink");
+  return "vidlink";
 }
 
 let playerSource = resolvePlayerSource();
@@ -246,6 +264,7 @@ let filterPage = 1;
 let isFetchingMore = false;
 let ignoreProgress = false;
 let nowPlaying = null;
+let isPlayerOpen = false;
 
 const CACHE_TTL = 30 * 60 * 1000;
 
@@ -1141,7 +1160,8 @@ function playContent(item, season, episode, updateUrl = true) {
   const e = episode || 1;
 
   const resumeAt = getResumePosition(item.id, item.type, s, e);
-  const provider = PROVIDERS[playerSource] || PROVIDERS.vidy;
+  const provider =
+    PROVIDERS[playerSource] || PROVIDERS.vidlink || PROVIDERS.vidy;
   const url = provider.buildUrl({
     type: item.type,
     id: item.id,
@@ -1152,6 +1172,7 @@ function playContent(item, season, episode, updateUrl = true) {
   });
 
   nowPlaying = { id: item.id, type: item.type, season: s, episode: e };
+  isPlayerOpen = true;
 
   closeDetail(false);
 
@@ -1173,7 +1194,7 @@ function playContent(item, season, episode, updateUrl = true) {
 
   setTimeout(() => {
     const frame = document.getElementById("player-frame");
-    frame.innerHTML = `<iframe src="${url}" allowfullscreen allow="encrypted-media; autoplay *; fullscreen *"></iframe>`;
+    frame.innerHTML = `<iframe src="${url}" allowfullscreen allow="encrypted-media; autoplay *; fullscreen *; picture-in-picture"></iframe>`;
   }, 150);
 
   document.getElementById("player-overlay").classList.add("active");
@@ -1181,6 +1202,7 @@ function playContent(item, season, episode, updateUrl = true) {
 }
 
 function destroyPlayerFrame() {
+  isPlayerOpen = false;
   ignoreProgress = true;
   nowPlaying = null;
   const wrap = document.getElementById("player-frame");
@@ -1193,6 +1215,7 @@ function destroyPlayerFrame() {
 }
 
 function closePlayer(updateUrl = true) {
+  isPlayerOpen = false;
   ignoreProgress = true;
   destroyPlayerFrame();
   document.getElementById("player-overlay").classList.remove("active");
@@ -1830,6 +1853,13 @@ function wireListeners() {
       closeDetail();
   };
 
+  window.addEventListener("beforeunload", (e) => {
+    if (isPlayerOpen) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+
   window.addEventListener("message", (ev) => {
     if (ignoreProgress) return;
 
@@ -1837,42 +1867,79 @@ function wireListeners() {
       const msg = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data;
       if (!msg || typeof msg !== "object") return;
 
-      // Vidy: serialized local history about once a second
+      // Handle MEDIA_DATA (from Vidy or VidLink)
       if (msg.type === "MEDIA_DATA" && msg.data) {
         const hist = typeof msg.data === "string" ? JSON.parse(msg.data) : msg.data;
-        if (hist && hist.id && hist.mediaType) saveProgress(hist);
+        if (hist) {
+          if (hist.id && hist.mediaType) {
+            saveProgress(hist);
+          } else if (nowPlaying && hist[nowPlaying.id]) {
+            const item = hist[nowPlaying.id];
+            const p = item.progress || {};
+            const watched = Number(p.watched) || 0;
+            const dur = Number(p.duration) || 0;
+            if (dur > 0 || watched > 0) {
+              saveProgress({
+                id: nowPlaying.id,
+                mediaType: nowPlaying.type,
+                season: nowPlaying.season,
+                episode: nowPlaying.episode,
+                currentTime: watched,
+                duration: dur,
+                progress: dur > 0 ? Math.min(100, (watched / dur) * 100) : 0,
+              });
+            }
+          }
+        }
         return;
       }
 
-      // Vidy: playback lifecycle events — merge with the item we mounted
-      if (
-        msg.type === "PLAYER_EVENT" &&
-        nowPlaying &&
-        (msg.event === "timeupdate" ||
-          msg.event === "play" ||
-          msg.event === "pause" ||
-          msg.event === "ended")
-      ) {
-        const currentTime =
-          typeof msg.currentTime === "number" && msg.currentTime > 0
-            ? msg.currentTime
-            : 0;
-        const duration =
-          typeof msg.duration === "number" && msg.duration > 0 ? msg.duration : 0;
-        saveProgress({
-          id: nowPlaying.id,
-          mediaType: nowPlaying.type,
-          season: nowPlaying.season,
-          episode: nowPlaying.episode,
-          currentTime,
-          duration,
-          progress:
-            duration > 0
-              ? Math.min(100, (currentTime / duration) * 100)
-              : msg.event === "ended"
-                ? 100
-                : 0,
-        });
+      // Handle PLAYER_EVENT (lifecycle events from VidLink / Vidy)
+      if (msg.type === "PLAYER_EVENT") {
+        const d = msg.data || msg;
+        const evt = d.event || msg.event;
+        if (
+          evt === "timeupdate" ||
+          evt === "play" ||
+          evt === "pause" ||
+          evt === "seeked" ||
+          evt === "ended"
+        ) {
+          const id = (nowPlaying && nowPlaying.id) || d.mtmdbId;
+          const mediaType = (nowPlaying && nowPlaying.type) || d.mediaType || "movie";
+          const season = (nowPlaying && nowPlaying.season) || d.season || null;
+          const episode = (nowPlaying && nowPlaying.episode) || d.episode || null;
+
+          if (!id) return;
+
+          const currentTime =
+            typeof d.currentTime === "number" && d.currentTime > 0
+              ? d.currentTime
+              : typeof msg.currentTime === "number" && msg.currentTime > 0
+                ? msg.currentTime
+                : 0;
+          const duration =
+            typeof d.duration === "number" && d.duration > 0
+              ? d.duration
+              : typeof msg.duration === "number" && msg.duration > 0
+                ? msg.duration
+                : 0;
+
+          saveProgress({
+            id: String(id),
+            mediaType: mediaType,
+            season: season,
+            episode: episode,
+            currentTime,
+            duration,
+            progress:
+              duration > 0
+                ? Math.min(100, (currentTime / duration) * 100)
+                : evt === "ended"
+                  ? 100
+                  : 0,
+          });
+        }
       }
     } catch (_) {}
   });
@@ -2001,7 +2068,7 @@ function wireSettingsActions() {
     const dd = document.getElementById("account-dropdown");
     dd.classList.remove("open");
     document.getElementById("nav-avatar").classList.remove("open");
-    showToast("Dert v1.0.0 — Free movie streaming powered by TMDB, Vidy & VidSrc");
+    showToast("Dert v1.0.0 — Free movie streaming powered by TMDB, VidLink, Vidy & VidSrc");
   };
 
   document.getElementById("settings-sync").onclick = (e) => {
@@ -2011,7 +2078,7 @@ function wireSettingsActions() {
     openSyncModal();
   };
 
-  const providerLabel = () => (PROVIDERS[playerSource] || PROVIDERS.vidy).label;
+  const providerLabel = () => (PROVIDERS[playerSource] || PROVIDERS.vidlink || PROVIDERS.vidy).label;
 
   const playerText = document.getElementById("player-source-text");
   if (playerText) playerText.textContent = `Player: ${providerLabel()}`;
@@ -2022,7 +2089,7 @@ function wireSettingsActions() {
       e.stopPropagation();
       const ids = Object.keys(PROVIDERS);
       const next = ids[(ids.indexOf(playerSource) + 1) % ids.length];
-      playerSource = PROVIDERS[next] ? next : "vidy";
+      playerSource = PROVIDERS[next] ? next : "vidlink";
       localStorage.setItem("vk_player", playerSource);
       if (playerText) playerText.textContent = `Player: ${providerLabel()}`;
       showToast(`Player set to ${providerLabel()}`);
