@@ -76,12 +76,37 @@
                 </button>
                 <div class="search-suggestions" id="search-suggestions"></div>
             </div>
-            <button class="nav-icon-btn" title="Notifications" aria-label="Notifications">
+            <button class="nav-icon-btn" id="notif-btn" title="Notifications" aria-label="Notifications">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
+                <span id="notif-dot" class="notif-dot hidden"></span>
             </button>
+            <div class="notification-dropdown" id="notification-dropdown">
+                <div class="notif-header">
+                    <strong>What’s New</strong>
+                    <button id="notif-mark-seen" type="button">Mark seen</button>
+                </div>
+                <div class="notif-list">
+                    <div class="notif-item">
+                        <strong>Personalized Match</strong>
+                        <p>TMDB rating and your personal match are now shown separately.</p>
+                    </div>
+                    <div class="notif-item">
+                        <strong>Recommended for You</strong>
+                        <p>Your row now uses likes, dislikes, and watch history.</p>
+                    </div>
+                    <div class="notif-item">
+                        <strong>Smarter banner</strong>
+                        <p>The main banner can feature movies/shows you are more likely to enjoy.</p>
+                    </div>
+                    <div class="notif-item">
+                        <strong>Player updates</strong>
+                        <p>VidLink now uses JW player, and Vidy uses the documented URL.</p>
+                    </div>
+                </div>
+            </div>
             <div class="nav-avatar" id="nav-avatar" tabindex="0" role="button">
                 <img src="avatar.svg" alt="Profile">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="avatar-caret">
@@ -219,6 +244,7 @@
                     <span>More Info</span>
                 </button>
             </div>
+            <div class="hero-pick-label hidden" id="hero-pick-label"></div>
         </div>
         <div class="hero-age-rating" id="hero-age">
             <div class="age-divider"></div>

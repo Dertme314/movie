@@ -1,7 +1,7 @@
 const IMG = "https://image.tmdb.org/t/p";
 
 const VIDLINK_BASE = "https://vidlink.pro";
-const VIDY_BASE = "https://www.vidy.st";
+const VIDY_BASE = "https://vidy.st";
 const VIDSRC_BASE = "https://vidsrc.sbs";
 
 const PROVIDERS = {
@@ -10,7 +10,7 @@ const PROVIDERS = {
     buildUrl({ type, id, season, episode, progress, color }) {
       const c = color || "e50914";
       const resumeParam = progress > 5 ? `&startAt=${Math.floor(progress)}` : "";
-      const common = `primaryColor=${c}&secondaryColor=121212&iconColor=${c}&icons=vid&title=false&poster=true&autoplay=true&nextbutton=true${resumeParam}`;
+      const common = `primaryColor=${c}&secondaryColor=121212&iconColor=${c}&icons=vid&title=false&poster=true&autoplay=true&nextbutton=true&player=jw${resumeParam}`;
       if (type === "tv") {
         return `${VIDLINK_BASE}/tv/${id}/${season}/${episode}?${common}`;
       }
@@ -309,7 +309,7 @@ function cyclePlayerSource(reloadIfPlaying = true) {
 
     const frame = document.getElementById("player-frame");
     if (frame) {
-      frame.innerHTML = `<iframe src="${url}" allow="encrypted-media; autoplay *; fullscreen *; picture-in-picture"></iframe>`;
+      frame.innerHTML = `<iframe src="${url}" allow="encrypted-media; autoplay *; fullscreen *; picture-in-picture" allowfullscreen></iframe>`;
     }
   }
 }
@@ -355,6 +355,14 @@ async function tmdb(ep, extra = {}) {
   return data;
 }
 
+function isRecent(dateStr, days = 14) {
+  if (!dateStr) return false;
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return false;
+  const diff = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
+  return diff >= 0 && diff <= days;
+}
+
 function norm(item, fallback) {
   const mt = item.media_type || fallback || "movie";
   if (mt === "person") return null;
@@ -367,6 +375,7 @@ function norm(item, fallback) {
     desc: item.overview || "",
     rating: item.vote_average ? item.vote_average.toFixed(1) : null,
     year: (item.release_date || item.first_air_date || "").slice(0, 4) || null,
+    date: item.release_date || item.first_air_date || "",
     genreIds: item.genre_ids || [],
   };
 }
@@ -750,7 +759,12 @@ function makeCard(item, badgeType, idx, options = {}) {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
         </div>
-        ${item.rating ? `<div class="card-match">${Math.round(item.rating * 10)}% Match</div>` : ""}
+        ${(() => {
+          const match = computeMatch(item);
+          return match ? `<div class="card-match">${match}% Match</div>` : "";
+        })()}
+        ${item.type === "movie" && isRecent(item.date, 14) ? `<span class="card-new">Recently Added</span>` : ""}
+        ${item.rating ? `<div class="card-rating">★ ${item.rating}</div>` : ""}
         <div class="card-name">${item.title}</div>
         ${genres ? `<div class="card-tags">${genres}</div>` : ""}`;
   card.appendChild(panel);
@@ -795,12 +809,36 @@ function makeCard(item, badgeType, idx, options = {}) {
 }
 
 function pickHero() {
+  const taste = getTasteProfile();
+  if (taste.hasTaste && taste.topGenres.length) {
+    fetchTasteCandidates()
+      .then((items) => {
+        const ok = items
+          .filter((item) => item.backdrop && item.desc && computeMatch(item))
+          .sort((a, b) => computeMatch(b) - computeMatch(a));
+        if (!ok.length) {
+          pickTrendingHero();
+          return;
+        }
+        heroItem = ok[Math.floor(Math.random() * Math.min(ok.length, 5))];
+        heroItem.fromTaste = true;
+        renderHero();
+      })
+      .catch(pickTrendingHero);
+    return;
+  }
+
+  pickTrendingHero();
+}
+
+function pickTrendingHero() {
   const use = (data) => {
     const ok = (data.results || [])
       .map((r) => norm(r))
       .filter((i) => i && i.backdrop && i.desc);
     if (!ok.length) return;
     heroItem = ok[Math.floor(Math.random() * Math.min(ok.length, 6))];
+    heroItem.fromTaste = false;
     renderHero();
   };
   if (trendingData) {
@@ -821,11 +859,18 @@ function renderHero() {
 
   const meta = document.getElementById("hero-metadata");
   meta.innerHTML = "";
-  if (heroItem.rating) {
+  const heroMatch = computeMatch(heroItem);
+  if (heroMatch) {
     const ms = document.createElement("span");
     ms.className = "match-score";
-    ms.textContent = `${Math.round(heroItem.rating * 10)}% Match`;
+    ms.textContent = `${heroMatch}% Match`;
     meta.appendChild(ms);
+  }
+  if (heroItem.rating) {
+    const rating = document.createElement("span");
+    rating.className = "hero-rating";
+    rating.textContent = `★ ${heroItem.rating}/10`;
+    meta.appendChild(rating);
   }
   if (heroItem.year) {
     const y = document.createElement("span");
@@ -837,6 +882,56 @@ function renderHero() {
   mb.className = "meta-badge";
   mb.textContent = "HD";
   meta.appendChild(mb);
+
+  const newBadge = document.createElement("span");
+  newBadge.className = "meta-new-badge";
+  newBadge.style.display = "none";
+  meta.appendChild(newBadge);
+
+  const showNewBadge = (text) => {
+    newBadge.textContent = text;
+    newBadge.style.display = "";
+  };
+
+  if (heroItem.type === "movie" && heroItem.date && isRecent(heroItem.date, 14)) {
+    heroItem._newBadge = "Recently Added";
+    showNewBadge(heroItem._newBadge);
+  } else if (heroItem.type === "tv") {
+    if (heroItem._newBadge) showNewBadge(heroItem._newBadge);
+    if (!heroItem._tvBadgeChecked) {
+      heroItem._tvBadgeChecked = true;
+      const thisHero = heroItem;
+      tmdb(`/tv/${heroItem.id}`)
+        .then((det) => {
+          if (heroItem !== thisHero) return;
+          const latestSeason = (det.seasons || [])
+            .filter((s) => s.season_number > 0 && s.air_date)
+            .sort((a, b) => b.air_date.localeCompare(a.air_date))[0];
+          if (latestSeason && isRecent(latestSeason.air_date, 14)) {
+            heroItem._newBadge = "New Season";
+            showNewBadge(heroItem._newBadge);
+            return;
+          }
+          const lastEp = det.last_episode_to_air;
+          if (lastEp && lastEp.air_date && isRecent(lastEp.air_date, 14)) {
+            heroItem._newBadge = "New Episode";
+            showNewBadge(heroItem._newBadge);
+          }
+        })
+        .catch(() => {});
+    }
+  }
+
+  const pickLabel = document.getElementById("hero-pick-label");
+  if (pickLabel) {
+    if (heroItem.fromTaste && heroMatch) {
+      pickLabel.textContent = "We think you’ll love this!";
+      pickLabel.classList.remove("hidden");
+    } else {
+      pickLabel.textContent = "";
+      pickLabel.classList.add("hidden");
+    }
+  }
 
   document.getElementById("hero-play-btn").onclick = () =>
     playContent(heroItem);
@@ -865,10 +960,17 @@ async function openDetail(item, updateUrl = true) {
 
   const meta = document.getElementById("detail-meta");
   meta.innerHTML = "";
-  if (item.rating) {
+  const itemMatch = computeMatch(item);
+  if (itemMatch) {
     const s = document.createElement("span");
     s.className = "match";
-    s.textContent = `${Math.round(item.rating * 10)}% Match`;
+    s.textContent = `${itemMatch}% Match`;
+    meta.appendChild(s);
+  }
+  if (item.rating) {
+    const s = document.createElement("span");
+    s.className = "detail-rating";
+    s.textContent = `★ ${item.rating}/10`;
     meta.appendChild(s);
   }
   if (item.year) {
@@ -929,9 +1031,11 @@ async function openDetail(item, updateUrl = true) {
       item.desc = det.overview;
       document.getElementById("detail-overview").textContent = det.overview;
     }
-    if (det.genres)
+    if (det.genres) {
+      item.genreIds = det.genres.map((g) => g.id);
       document.getElementById("detail-genre-line").innerHTML =
         `<span>Genres:</span> ${det.genres.map((g) => g.name).join(", ")}`;
+    }
 
     const cast = (cred.cast || []).slice(0, 8);
     if (cast.length)
@@ -959,6 +1063,11 @@ async function openDetail(item, updateUrl = true) {
     if (det.vote_average)
       rows.push(
         `<div class="about-row"><strong>Rating:</strong> ${det.vote_average.toFixed(1)}/10</div>`,
+      );
+    const detailMatch = computeMatch(item);
+    if (detailMatch)
+      rows.push(
+        `<div class="about-row"><strong>Your match:</strong> ${detailMatch}%</div>`,
       );
     abt.innerHTML = rows.join("");
 
@@ -1005,7 +1114,11 @@ async function openDetail(item, updateUrl = true) {
                      onerror="this.style.background='#333'">
                 <div class="sim-card-body">
                     <div class="sim-card-head">
-                        ${si.rating ? `<span class="sim-match">${Math.round(si.rating * 10)}%</span>` : "<span></span>"}
+                        ${(() => {
+                          const match = computeMatch(si);
+                          return match ? `<span class="sim-match">${match}%</span>` : "<span></span>";
+                        })()}
+                        ${si.rating ? `<span class="sim-rating">★ ${si.rating}</span>` : ""}
                         ${si.year ? `<span class="sim-year">${escapeHtml(si.year)}</span>` : ""}
                     </div>
                     <div class="sim-card-title">${escapeHtml(si.title)}</div>
@@ -1080,6 +1193,7 @@ function setItemRating(item, ratingChoice) {
     ratingChoice,
   });
   localStorage.setItem("vk_likes", JSON.stringify(likes.slice(0, 100)));
+  invalidateTasteProfile();
   buildTasteRow();
   showToast(
     ratingChoice === "love"
@@ -1095,8 +1209,122 @@ function clearItemRating(item) {
     (i) => !(String(i.id) === String(item.id) && i.type === item.type),
   );
   localStorage.setItem("vk_likes", JSON.stringify(likes));
+  invalidateTasteProfile();
   buildTasteRow();
   showToast("Rating removed");
+}
+
+let tasteProfileCache = null;
+let tasteCandidatesCache = null;
+function invalidateTasteProfile() {
+  tasteProfileCache = null;
+  tasteCandidatesCache = null;
+}
+
+async function fetchTasteCandidates() {
+  const taste = getTasteProfile();
+  if (!taste.hasTaste || !taste.topGenres.length) return [];
+  if (tasteCandidatesCache) return tasteCandidatesCache;
+
+  const types = taste.topTypes.length ? taste.topTypes : ["movie", "tv"];
+  const batches = await Promise.all(
+    types.map((type) =>
+      tmdb(`/discover/${type}`, {
+        with_genres: taste.topGenres.join("|"),
+        sort_by: "popularity.desc",
+        "vote_count.gte": 50,
+      }).then((data) =>
+        (data.results || [])
+          .map((result) => norm(result, type))
+          .filter(Boolean),
+      ),
+    ),
+  );
+
+  const seen = new Set();
+  tasteCandidatesCache = batches.flat().filter((item) => {
+    const key = `${item.type}:${item.id}`;
+    if (taste.seenIds.has(key) || seen.has(key) || !item.poster) return false;
+    seen.add(key);
+    return true;
+  });
+  return tasteCandidatesCache;
+}
+
+function getTasteProfile() {
+  if (tasteProfileCache) return tasteProfileCache;
+  const likes = getLikes();
+  let hist = [];
+  try {
+    hist = JSON.parse(localStorage.getItem("vk_hist") || "[]");
+  } catch (_) {
+    hist = [];
+  }
+
+  const genreScores = new Map();
+  const typeScores = new Map();
+  const seenIds = new Set();
+
+  const addTaste = (item, weight) => {
+    seenIds.add(`${item.type}:${item.id}`);
+    typeScores.set(item.type, (typeScores.get(item.type) || 0) + weight);
+    (item.genreIds || []).forEach((id) => {
+      genreScores.set(id, (genreScores.get(id) || 0) + weight);
+    });
+  };
+
+  likes.forEach((item) => {
+    if (item.ratingChoice === "dislike") addTaste(item, -1.5);
+    else addTaste(item, item.ratingChoice === "love" ? 3 : 1);
+  });
+
+  hist
+    .filter((item) => (item.genreIds || []).length)
+    .slice(0, 20)
+    .forEach((item, index) => addTaste(item, index === 0 ? 1 : 0.6));
+
+  const positiveGenres = [...genreScores.entries()]
+    .filter(([, score]) => score > 0)
+    .sort((a, b) => b[1] - a[1]);
+  const positiveTypes = [...typeScores.entries()]
+    .filter(([, score]) => score > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  tasteProfileCache = {
+    genreScores,
+    typeScores,
+    seenIds,
+    topGenres: positiveGenres.slice(0, 3).map(([id]) => id),
+    topTypes: positiveTypes.map(([type]) => type),
+    hasTaste: positiveGenres.length > 0 || positiveTypes.length > 0,
+  };
+  return tasteProfileCache;
+}
+
+function computeMatch(item) {
+  const taste = getTasteProfile();
+  if (!taste.hasTaste || !(item.genreIds || []).length) return null;
+
+  let contribution = 0;
+  let positiveHits = 0;
+  let negativeHits = 0;
+
+  item.genreIds.forEach((id) => {
+    const score = taste.genreScores.get(id) || 0;
+    contribution += score;
+    if (score > 0) positiveHits += 1;
+    if (score < 0) negativeHits += Math.abs(score);
+  });
+
+  // Only give a personalized match when this title touches at least one positive taste tag.
+  if (!positiveHits) return null;
+
+  const typeBonus = taste.topTypes.includes(item.type) ? 8 : 0;
+  const ratingAdjustment = item.rating ? (Number(item.rating) - 6) * 2 : 0;
+  const score = Math.round(
+    42 + contribution * 10 + positiveHits * 6 + typeBonus + ratingAdjustment - negativeHits * 12,
+  );
+  return Math.max(5, Math.min(99, score));
 }
 
 function closeRatingMenu() {
@@ -1242,7 +1470,7 @@ function playContent(item, season, episode, updateUrl = true) {
 
   setTimeout(() => {
     const frame = document.getElementById("player-frame");
-    frame.innerHTML = `<iframe src="${url}" allow="encrypted-media; autoplay *; fullscreen *; picture-in-picture"></iframe>`;
+    frame.innerHTML = `<iframe src="${url}" allow="encrypted-media; autoplay *; fullscreen *; picture-in-picture" allowfullscreen></iframe>`;
   }, 150);
 
   const quickText = document.getElementById("player-quick-source-text");
@@ -1420,7 +1648,7 @@ async function fetchSuggestions(q) {
                     <div class="suggest-meta">
                         <span class="sug-type">${i.type === "tv" ? "Series" : "Movie"}</span>
                         ${i.year ? ` · ${escapeHtml(i.year)}` : ""}
-                        ${i.rating ? ` · ${Math.round(i.rating * 10)}%` : ""}
+                        ${i.rating ? ` · ★ ${i.rating}` : ""}
                     </div>
                 </div>
             </div>
@@ -1507,6 +1735,7 @@ function saveHistory(item) {
     genreIds: item.genreIds || [],
   });
   localStorage.setItem("vk_hist", JSON.stringify(h.slice(0, 30)));
+  invalidateTasteProfile();
 }
 
 function removeProgressForItem(item) {
@@ -1526,7 +1755,9 @@ function removeFromContinueWatching(item) {
   );
   localStorage.setItem("vk_hist", JSON.stringify(h));
   removeProgressForItem(item);
+  invalidateTasteProfile();
   buildContinueRow();
+  buildTasteRow();
   showToast("Removed from Continue Watching");
 }
 
@@ -1549,59 +1780,24 @@ async function buildTasteRow() {
   const old = document.querySelector('[data-rowid="taste"]');
   if (old) old.remove();
 
-  const likes = getLikes();
-  const positiveLikes = likes.filter(
-    (item) => item.ratingChoice !== "dislike" && (item.genreIds || []).length,
-  );
-  if (!positiveLikes.length) return;
-
-  const genreScores = new Map();
-  const typeScores = new Map();
-  positiveLikes.forEach((item) => {
-    const weight = item.ratingChoice === "love" ? 3 : 1;
-    typeScores.set(item.type, (typeScores.get(item.type) || 0) + weight);
-    (item.genreIds || []).forEach((id) => {
-      genreScores.set(id, (genreScores.get(id) || 0) + weight);
-    });
-  });
-
-  const topGenres = [...genreScores.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([id]) => id);
-  const topTypes = [...typeScores.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([type]) => type);
-  const ratedIds = new Set(likes.map((item) => `${item.type}:${item.id}`));
+  const taste = getTasteProfile();
+  if (!taste.hasTaste || !taste.topGenres.length) return;
 
   try {
-    const calls = (topTypes.length ? topTypes : ["movie", "tv"]).map((type) =>
-      tmdb(`/discover/${type}`, {
-        with_genres: topGenres.join("|"),
-        sort_by: "popularity.desc",
-        "vote_count.gte": 50,
-      }).then((data) =>
-        (data.results || []).map((result) => norm(result, type)).filter(Boolean),
-      ),
-    );
-    const batches = await Promise.all(calls);
-    const seen = new Set();
-    const items = batches
-      .flat()
-      .filter((item) => {
-        const key = `${item.type}:${item.id}`;
-        if (ratedIds.has(key) || seen.has(key) || !item.poster) return false;
-        seen.add(key);
-        return true;
-      })
-      .slice(0, 24);
+    const candidates = await fetchTasteCandidates();
+    const items = candidates
+      .map((item) => ({ item, match: computeMatch(item) ?? 0 }))
+      .filter((entry) => entry.match > 0)
+      .sort((a, b) => b.match - a.match)
+      .slice(0, 24)
+      .map((entry) => entry.item);
 
     if (!items.length) return;
 
     const main = document.getElementById("main-rows");
     const continueRow = document.querySelector('[data-rowid="continue"]');
     const row = makeRow(
-      { id: "taste", title: "Because You Liked These", mediaType: "all" },
+      { id: "taste", title: "Recommended for You", mediaType: "all" },
       items,
     );
     main.insertBefore(row, continueRow ? continueRow.nextSibling : main.firstChild);
@@ -1958,6 +2154,15 @@ function wireListeners() {
   window.addEventListener("message", (ev) => {
     if (ignoreProgress) return;
 
+    const trustedPlayerOrigin =
+      ev.origin === "https://vidlink.pro" ||
+      ev.origin === "https://www.vidlink.pro" ||
+      ev.origin === "https://vidy.st" ||
+      ev.origin === "https://www.vidy.st" ||
+      ev.origin === "https://vidsrc.sbs" ||
+      ev.origin === "https://www.vidsrc.sbs";
+    if (!trustedPlayerOrigin) return;
+
     try {
       const msg = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data;
       if (!msg || typeof msg !== "object") return;
@@ -2050,6 +2255,7 @@ function wireListeners() {
     makeInteractive(avatar);
   }
 
+  wireNotifActions();
   wireSettingsActions();
 
   document.addEventListener("click", (e) => {
@@ -2080,6 +2286,12 @@ function wireListeners() {
     const ratingControl = document.getElementById("detail-rating-control");
     if (ratingControl && !ratingControl.contains(e.target)) {
       closeRatingMenu();
+    }
+
+    const notifDrop = document.getElementById("notification-dropdown");
+    const notifBtn = document.getElementById("notif-btn");
+    if (notifDrop && notifBtn && notifDrop.classList.contains("open") && !notifDrop.contains(e.target) && !notifBtn.contains(e.target)) {
+      notifDrop.classList.remove("open");
     }
   });
 }
@@ -2117,13 +2329,46 @@ function settingsConfirm(btn, action) {
   btn.querySelector("span").textContent = "Click again to confirm";
 }
 
+function wireNotifActions() {
+  const VERS = "v1.1.0";
+  const btn = document.getElementById("notif-btn");
+  const drop = document.getElementById("notification-dropdown");
+  const dot = document.getElementById("notif-dot");
+  const seenBtn = document.getElementById("notif-mark-seen");
+  if (!btn || !drop || !dot || !seenBtn) return;
+
+  const refreshDot = () => {
+    dot.classList.toggle(
+      "hidden",
+      localStorage.getItem("vk_whats_new_seen") === VERS,
+    );
+  };
+  refreshDot();
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    drop.classList.toggle("open");
+    if (drop.classList.contains("open")) {
+      localStorage.setItem("vk_whats_new_seen", VERS);
+      refreshDot();
+    }
+  };
+  seenBtn.onclick = () => {
+    localStorage.setItem("vk_whats_new_seen", VERS);
+    refreshDot();
+    drop.classList.remove("open");
+  };
+}
+
 function wireSettingsActions() {
   document.getElementById("settings-clear-history").onclick = (e) => {
     e.stopPropagation();
     settingsConfirm(e.currentTarget, () => {
       localStorage.removeItem("vk_hist");
+      invalidateTasteProfile();
       const old = document.querySelector('[data-rowid="continue"]');
       if (old) old.remove();
+      buildTasteRow();
       showToast("Watch history cleared");
     });
   };
@@ -2153,6 +2398,7 @@ function wireSettingsActions() {
         sessionStorage.clear();
       } catch (_) {}
       localStorage.removeItem("vk_likes");
+      invalidateTasteProfile();
       buildTasteRow();
       showToast("Cache and recommendations cleared");
     });
@@ -2400,6 +2646,7 @@ async function importSyncCode() {
     showToast("Data synced successfully!");
     setTimeout(() => {
       closeSyncModal();
+      invalidateTasteProfile();
       buildContinueRow();
       buildTasteRow();
     }, 1500);
