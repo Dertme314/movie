@@ -1,8 +1,23 @@
 const IMG = "https://image.tmdb.org/t/p";
 
+const SITE_URL = (() => {
+  try {
+    return window.location.origin + window.location.pathname;
+  } catch (_) {
+    return "";
+  }
+})();
+const SITE_LOGO = (() => {
+  try {
+    return new URL("favicon.png", window.location.href).href;
+  } catch (_) {
+    return "";
+  }
+})();
+
 const VIDLINK_BASE = "https://vidlink.pro";
 const VIDY_BASE = "https://vidy.st";
-const VIDSRC_BASE = "https://vidsrc.sbs";
+const VIDSRC_BASE = "https://vidsrc.ru";
 
 const PROVIDERS = {
   vidlink: {
@@ -31,11 +46,15 @@ const PROVIDERS = {
   vidsrc: {
     label: "VidSrc",
     buildUrl({ type, id, season, episode, progress, color }) {
+      const c = color || "e50914";
       const resumeParam = progress > 5 ? `&t=${Math.floor(progress)}` : "";
+      const brand = SITE_URL
+        ? `&backbutton=${encodeURIComponent(SITE_URL)}${SITE_LOGO ? `&logo=${encodeURIComponent(SITE_LOGO)}` : ""}`
+        : "";
       if (type === "tv") {
-        return `${VIDSRC_BASE}/embed/tv/${id}/${season}/${episode}?autoplay=1&color=${color}${resumeParam}`;
+        return `${VIDSRC_BASE}/tv/${id}/${season}/${episode}?autoplay=true&colour=${c}&autonextepisode=true${brand}${resumeParam}`;
       }
-      return `${VIDSRC_BASE}/embed/movie/${id}?autoplay=1&color=${color}${resumeParam}`;
+      return `${VIDSRC_BASE}/movie/${id}?autoplay=true&colour=${c}${brand}${resumeParam}`;
     },
   },
 };
@@ -265,6 +284,9 @@ let filterCurrent = null;
 let lastSearchQuery = "";
 let searchPage = 1;
 let filterPage = 1;
+let resultItems = [];
+let resultType = "all";
+let resultSort = "rating";
 let isFetchingMore = false;
 let ignoreProgress = false;
 let nowPlaying = null;
@@ -363,6 +385,41 @@ function isRecent(dateStr, days = 14) {
   return diff >= 0 && diff <= days;
 }
 
+function isUnreleased(item) {
+  if (!item) return false;
+  if (
+    ["Post Production", "In Production", "Planned", "Rumored"].includes(
+      item.releaseStatus,
+    )
+  )
+    return true;
+  if (!item.date) return false;
+  const raw = String(item.date);
+  const d = new Date(raw.length === 10 ? `${raw}T00:00:00` : raw);
+  return !Number.isNaN(d.getTime()) && d.getTime() > Date.now();
+}
+
+function releaseLabel(item) {
+  if (!item || !item.date) return "";
+  const raw = String(item.date);
+  const d = new Date(raw.length === 10 ? `${raw}T00:00:00` : raw);
+  if (Number.isNaN(d.getTime()) || d.getTime() <= Date.now()) return "";
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function warnUnreleased(item) {
+  const when = releaseLabel(item);
+  showToast(
+    when
+      ? `${item.title} isn't out yet releases ${when}. It likely won't play.`
+      : `${item.title} isn't out yet. It likely won't play.`,
+  );
+}
+
 function norm(item, fallback) {
   const mt = item.media_type || fallback || "movie";
   if (mt === "person") return null;
@@ -377,6 +434,7 @@ function norm(item, fallback) {
     year: (item.release_date || item.first_air_date || "").slice(0, 4) || null,
     date: item.release_date || item.first_air_date || "",
     genreIds: item.genre_ids || [],
+    popularity: item.popularity || 0,
   };
 }
 
@@ -433,6 +491,7 @@ function genreNames(ids) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   wireListeners();
+  syncMyListCount();
   const route = parseHash(window.location.hash);
   if (route.mode === "page" && ["movies", "tv", "mylist"].includes(route.page)) {
     currentPage = route.page;
@@ -506,11 +565,12 @@ async function loadNextPage() {
       ];
     }
 
-    const items = results
-      .filter((i) => i && i.poster)
-      .sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    const grid = document.getElementById("search-grid");
-    items.forEach((i) => grid.appendChild(makeCard(i)));
+    const items = results.filter((i) => i && i.poster);
+    const seen = new Set(resultItems.map((i) => `${i.type}_${i.id}`));
+    resultItems = resultItems.concat(
+      items.filter((i) => !seen.has(`${i.type}_${i.id}`)),
+    );
+    renderResultGrid();
 
     if (results.length === 0) {
       document.getElementById("infinite-scroll-sentinel").style.display =
@@ -763,10 +823,14 @@ function makeCard(item, badgeType, idx, options = {}) {
           const match = computeMatch(item);
           return match ? `<div class="card-match">${match}% Match</div>` : "";
         })()}
-        ${item.type === "movie" && isRecent(item.date, 14) ? `<span class="card-new">Recently Added</span>` : ""}
-        ${item.rating ? `<div class="card-rating">★ ${item.rating}</div>` : ""}
-        <div class="card-name">${item.title}</div>
-        ${genres ? `<div class="card-tags">${genres}</div>` : ""}`;
+        ${isUnreleased(item)
+          ? `<span class="card-new card-unreleased">Unreleased</span>`
+          : item.type === "movie" && isRecent(item.date, 14)
+          ? `<span class="card-new">Recently Added</span>`
+          : ""}
+        ${item.rating ? `<div class="card-rating">★ ${escapeHtml(item.rating)}</div>` : ""}
+        <div class="card-name">${escapeHtml(item.title)}</div>
+        ${genres ? `<div class="card-tags">${escapeHtml(genres)}</div>` : ""}`;
   card.appendChild(panel);
 
   panel.querySelector('[data-do="play"]').onclick = (e) => {
@@ -820,7 +884,9 @@ function pickHero() {
           pickTrendingHero();
           return;
         }
-        heroItem = ok[Math.floor(Math.random() * Math.min(ok.length, 5))];
+        const pool = ok.filter((item) => !isUnreleased(item));
+        const use = pool.length ? pool : ok;
+        heroItem = use[Math.floor(Math.random() * Math.min(use.length, 5))];
         heroItem.fromTaste = true;
         renderHero();
       })
@@ -837,7 +903,9 @@ function pickTrendingHero() {
       .map((r) => norm(r))
       .filter((i) => i && i.backdrop && i.desc);
     if (!ok.length) return;
-    heroItem = ok[Math.floor(Math.random() * Math.min(ok.length, 6))];
+    const pool = ok.filter((item) => !isUnreleased(item));
+    const list = pool.length ? pool : ok;
+    heroItem = list[Math.floor(Math.random() * Math.min(list.length, 6))];
     heroItem.fromTaste = false;
     renderHero();
   };
@@ -938,6 +1006,83 @@ function renderHero() {
   document.getElementById("hero-info-btn").onclick = () => openDetail(heroItem);
 }
 
+function setupDetailPlayBtn(item, details) {
+  const pb = document.getElementById("detail-play-btn");
+  if (!pb) return;
+  const pr = getProgress(item.id, item.type);
+  if (isUnreleased(item)) {
+    pb.querySelector("span").textContent = "Unreleased";
+    pb.onclick = () => warnUnreleased(item);
+  } else if (item.type === "tv" && pr && pr.season && pr.episode) {
+    const finished = (pr.progress || 0) >= 95;
+    const seasons = (details && details.seasons ? details.seasons : [])
+      .filter((season) => season.season_number > 0 && season.episode_count > 0)
+      .sort((a, b) => a.season_number - b.season_number);
+    const currentSeason = seasons.find(
+      (season) => Number(season.season_number) === Number(pr.season),
+    );
+    let next = null;
+    if (finished) {
+      if (!currentSeason || Number(pr.episode) < currentSeason.episode_count) {
+        next = { season: pr.season, episode: Number(pr.episode) + 1 };
+      } else {
+        const nextSeason = seasons.find(
+          (season) => season.season_number > Number(pr.season),
+        );
+        if (nextSeason) next = { season: nextSeason.season_number, episode: 1 };
+      }
+    }
+    pb.querySelector("span").textContent = finished
+      ? next
+        ? `Next: S${next.season}:E${next.episode}`
+        : "Play"
+      : `Resume S${pr.season}:E${pr.episode}`;
+    pb.onclick = () =>
+      playContent(
+        item,
+        finished ? (next ? next.season : undefined) : pr.season,
+        finished ? (next ? next.episode : undefined) : pr.episode,
+      );
+  } else if (pr && pr.currentTime > 0 && (pr.progress || 0) < 95) {
+    pb.querySelector("span").textContent = "Resume";
+    pb.onclick = () => playContent(item);
+  } else {
+    pb.querySelector("span").textContent = "Play";
+    pb.onclick = () => playContent(item);
+  }
+}
+
+function syncDetailUnreleased(item, status) {
+  const meta = document.getElementById("detail-meta");
+  const note = document.getElementById("detail-note");
+  if (status) item.releaseStatus = status;
+  const flagged = isUnreleased(item);
+
+  if (!flagged) {
+    const oldBadge = document.getElementById("detail-unreleased-badge");
+    if (oldBadge) oldBadge.remove();
+    if (note) {
+      note.textContent = "";
+      note.classList.remove("active");
+    }
+    return;
+  }
+
+  if (meta && !document.getElementById("detail-unreleased-badge")) {
+    const ub = document.createElement("span");
+    ub.className = "badge badge-unreleased";
+    ub.id = "detail-unreleased-badge";
+    ub.textContent = "Unreleased";
+    meta.appendChild(ub);
+  }
+  if (note) {
+    note.textContent = releaseLabel(item)
+      ? `Releases ${releaseLabel(item)} playback likely won't work until then.`
+      : `${status || "Not released"} playback likely won't work yet.`;
+    note.classList.add("active");
+  }
+}
+
 async function openDetail(item, updateUrl = true) {
   if (!item) return;
   detailCurrent = item;
@@ -987,6 +1132,13 @@ async function openDetail(item, updateUrl = true) {
   hd.className = "badge";
   hd.textContent = "HD";
   meta.appendChild(hd);
+  syncDetailUnreleased(item, null);
+
+  const trailerBtn = document.getElementById("detail-trailer-btn");
+  if (trailerBtn) {
+    trailerBtn.style.display = "none";
+    trailerBtn.onclick = null;
+  }
 
   document.getElementById("detail-genre-line").innerHTML = genreNames(
     item.genreIds,
@@ -994,19 +1146,7 @@ async function openDetail(item, updateUrl = true) {
     ? `<span>Genres:</span> ${genreNames(item.genreIds).join(", ")}`
     : "";
 
-  const pb = document.getElementById("detail-play-btn");
-  const pr = getProgress(item.id, item.type);
-  if (item.type === "tv" && pr && pr.season && pr.episode) {
-    pb.querySelector("span").textContent =
-      `Resume S${pr.season}:E${pr.episode}`;
-    pb.onclick = () => playContent(item, pr.season, pr.episode);
-  } else if (pr && pr.currentTime > 0 && (pr.progress || 0) < 95) {
-    pb.querySelector("span").textContent = "Resume";
-    pb.onclick = () => playContent(item);
-  } else {
-    pb.querySelector("span").textContent = "Play";
-    pb.onclick = () => playContent(item);
-  }
+  setupDetailPlayBtn(item);
   syncListBtn(item);
   syncRatingBtn(item);
 
@@ -1021,10 +1161,11 @@ async function openDetail(item, updateUrl = true) {
   ov.scrollTop = 0;
 
   try {
-    const [det, cred, sim] = await Promise.all([
+    const [det, cred, sim, videos] = await Promise.all([
       tmdb(`/${item.type}/${item.id}`),
       tmdb(`/${item.type}/${item.id}/credits`),
       tmdb(`/${item.type}/${item.id}/similar`),
+      tmdb(`/${item.type}/${item.id}/videos`).catch(() => ({ results: [] })),
     ]);
 
     if (det.overview) {
@@ -1070,6 +1211,23 @@ async function openDetail(item, updateUrl = true) {
         `<div class="about-row"><strong>Your match:</strong> ${detailMatch}%</div>`,
       );
     abt.innerHTML = rows.join("");
+
+    const vids = (videos.results || []).filter((v) => v.site === "YouTube");
+    const trailer =
+      vids.find((v) => v.type === "Trailer" && v.official) ||
+      vids.find((v) => v.type === "Trailer") ||
+      vids.find((v) => v.type === "Teaser");
+    if (trailer && trailerBtn) {
+      trailerBtn.style.display = "";
+      trailerBtn.onclick = (e) => {
+        e.stopPropagation();
+        openTrailer(trailer.key);
+      };
+    }
+
+    item.date = det.release_date || det.first_air_date || item.date;
+    syncDetailUnreleased(item, det.status);
+    setupDetailPlayBtn(item, det);
 
     if (item.type === "tv" && det.seasons) {
       const seasons = det.seasons.filter((s) => s.season_number > 0);
@@ -1161,6 +1319,7 @@ function syncListBtn(item) {
   btn.onclick = () => {
     toggleMyList(item);
     syncListBtn(item);
+    if (currentPage === "mylist") showMyList();
   };
 }
 
@@ -1383,8 +1542,20 @@ async function fetchEps(tvId, sNum) {
       .map((ep) => {
         const still = ep.still_path ? `${IMG}/w300${ep.still_path}` : "";
         const rt = ep.runtime ? `${ep.runtime}m` : "";
+        const showPr = getProgress(tvId, "tv");
+        const exactPr = getProgress(tvId, "tv", sNum, ep.episode_number);
+        const epPr =
+          exactPr ||
+          (showPr &&
+          Number(showPr.season) === Number(sNum) &&
+          Number(showPr.episode) === Number(ep.episode_number)
+            ? showPr
+            : null);
+        const pct = epPr ? Math.min(100, epPr.progress || 0) : 0;
+        const isDone = pct >= 95;
+        const isCurrent = !isDone && pct > 0;
         return `
-                <div class="ep-card" tabindex="0" role="button" aria-label="Play episode ${ep.episode_number}: ${escapeHtml(ep.name) || "Episode " + ep.episode_number}" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); this.click(); }" onclick="playContent(detailCurrent,${sNum},${ep.episode_number})">
+                <div class="ep-card${isDone ? " watched" : ""}${isCurrent ? " current" : ""}" tabindex="0" role="button" aria-label="Play episode ${ep.episode_number}: ${escapeHtml(ep.name) || "Episode " + ep.episode_number}" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); this.click(); }" onclick="playContent(detailCurrent,${sNum},${ep.episode_number})">
                     <div class="ep-index">${ep.episode_number}</div>
                     <div class="ep-thumb" style="background-image:url(${escapeHtml(still)})">
                         <div class="ep-play-overlay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
@@ -1392,10 +1563,16 @@ async function fetchEps(tvId, sNum) {
                     <div class="ep-info">
                         <div class="ep-info-top">
                             <span class="ep-name">${escapeHtml(ep.name) || "Episode " + ep.episode_number}</span>
+                            ${isDone ? '<span class="ep-done" aria-label="Watched">✓</span>' : isCurrent ? '<span class="ep-resume">Resume</span>' : ""}
                             <span class="ep-len">${escapeHtml(rt)}</span>
                         </div>
                         <div class="ep-synopsis">${escapeHtml(ep.overview || "")}</div>
                     </div>
+                    ${
+                      pct > 0 && !isDone
+                        ? `<div class="ep-progress"><div style="width:${pct}%"></div></div>`
+                        : ""
+                    }
                 </div>`;
       })
       .join("");
@@ -1420,6 +1597,10 @@ function getResumePosition(id, type, season, episode) {
 
 function playContent(item, season, episode, updateUrl = true) {
   if (!item) return;
+  if (isUnreleased(item)) {
+    warnUnreleased(item);
+    return;
+  }
   saveHistory(item);
 
   destroyPlayerFrame();
@@ -1555,21 +1736,50 @@ async function applyFilter(genreId, genreName) {
     const items = [
       ...(m.results || []).map((r) => norm(r, "movie")),
       ...(t.results || []).map((r) => norm(r, "tv")),
-    ]
-      .filter((i) => i && i.poster)
-      .sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    ].filter((i) => i && i.poster);
 
     if (!items.length) {
+      resultItems = [];
       grid.innerHTML =
         '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg><h3>No matches found</h3><p>Try selecting a different genre.</p><button class="btn-hero btn-white" style="margin-top: 20px;" onclick="navTo(\'home\')">Browse Home</button></div>';
       return;
     }
-    grid.innerHTML = "";
-    items.forEach((i) => grid.appendChild(makeCard(i)));
+    resultItems = items;
+    renderResultGrid();
   } catch (e) {
     grid.innerHTML =
       '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Something went wrong</h3><p>Please try again later.</p><button class="btn-hero btn-white" style="margin-top: 20px;" onclick="navTo(\'home\')">Browse Home</button></div>';
   }
+}
+
+function renderResultGrid() {
+  const grid = document.getElementById("search-grid");
+  if (!grid) return;
+  let items = [...resultItems];
+  if (resultType !== "all") items = items.filter((i) => i.type === resultType);
+  if (resultSort === "newest")
+    items.sort((a, b) =>
+      String(b.date || "").localeCompare(String(a.date || "")),
+    );
+  else if (resultSort === "popular")
+    items.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+  else
+    items.sort(
+      (a, b) => (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0),
+    );
+
+  grid.innerHTML = "";
+  if (!items.length) {
+    const label =
+      resultType === "tv"
+        ? "shows"
+        : resultType === "movie"
+          ? "movies"
+          : "titles";
+    grid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;"><h3>No ${label} here</h3><p>Try a different filter or sort.</p></div>`;
+    return;
+  }
+  items.forEach((i) => grid.appendChild(makeCard(i)));
 }
 
 async function doSearch(q) {
@@ -1607,12 +1817,13 @@ async function doSearch(q) {
       .map((r) => norm(r))
       .filter((i) => i && i.poster);
     if (!items.length) {
+      resultItems = [];
       grid.innerHTML =
         '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><h3>No results found</h3><p>Try adjusting your search query.</p><button class="btn-hero btn-white" style="margin-top: 20px;" onclick="document.getElementById(\'search-clear\').click()">Clear Search</button></div>';
       return;
     }
-    grid.innerHTML = "";
-    items.forEach((i) => grid.appendChild(makeCard(i)));
+    resultItems = items;
+    renderResultGrid();
   } catch (e) {
     grid.innerHTML =
       '<div class="empty-state" style="grid-column: 1 / -1;"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><h3 style="color:#ff4444">Something went wrong</h3><p>Please try again later.</p><button class="btn-hero btn-white" style="margin-top: 20px;" onclick="document.getElementById(\'search-clear\').click()">Clear Search</button></div>';
@@ -1658,12 +1869,14 @@ async function fetchSuggestions(q) {
       `<div class="suggest-footer" id="suggest-see-all">See all results for "${escapeHtml(q)}"</div>`;
     box.querySelectorAll(".suggest-item").forEach((el, idx) => {
       el.onclick = () => {
+        addRecentSearch(q);
         box.classList.remove("active");
         box.innerHTML = "";
         openDetail(items[idx]);
       };
     });
     document.getElementById("suggest-see-all").onclick = () => {
+      addRecentSearch(q);
       box.classList.remove("active");
       box.innerHTML = "";
       doSearch(q);
@@ -1678,6 +1891,87 @@ function hideSuggestions() {
   const box = document.getElementById("search-suggestions");
   box.classList.remove("active");
   box.innerHTML = "";
+}
+
+function getRecentSearches() {
+  try {
+    const arr = JSON.parse(localStorage.getItem("vk_recent_searches") || "[]");
+    return Array.isArray(arr)
+      ? arr.filter((s) => typeof s === "string" && s.trim()).slice(0, 8)
+      : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function addRecentSearch(q) {
+  const term = String(q || "").trim();
+  if (term.length < 2) return;
+  const list = getRecentSearches().filter(
+    (s) => s.toLowerCase() !== term.toLowerCase(),
+  );
+  list.unshift(term);
+  try {
+    localStorage.setItem("vk_recent_searches", JSON.stringify(list.slice(0, 8)));
+  } catch (_) {}
+}
+
+function clearRecentSearches() {
+  try {
+    localStorage.removeItem("vk_recent_searches");
+  } catch (_) {}
+}
+
+function showRecentSearches() {
+  const box = document.getElementById("search-suggestions");
+  const list = getRecentSearches();
+  if (!box || !list.length) return false;
+  const clock =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>';
+  box.innerHTML =
+    list
+      .map(
+        (q) => `
+        <div class="suggest-item recent-item" tabindex="0" role="button" aria-label="Search for ${escapeHtml(q)}">
+            <div class="suggest-recent-icon">${clock}</div>
+            <div class="suggest-info">
+                <div class="suggest-title">${escapeHtml(q)}</div>
+            </div>
+        </div>`,
+      )
+      .join("") +
+    '<div class="suggest-footer" id="recent-clear">Clear recent searches</div>';
+  box.querySelectorAll(".recent-item").forEach((el, idx) => {
+    el.onclick = () => {
+      const val = list[idx];
+      const input = document.getElementById("search-input");
+      if (input) input.value = val;
+      document.getElementById("search-wrapper").classList.add("has-text");
+      addRecentSearch(val);
+      hideSuggestions();
+      doSearch(val);
+    };
+  });
+  const clearBtn = document.getElementById("recent-clear");
+  if (clearBtn)
+    clearBtn.onclick = () => {
+      clearRecentSearches();
+      hideSuggestions();
+    };
+  box.classList.add("active");
+  return true;
+}
+
+function moveSuggestion(dir) {
+  const box = document.getElementById("search-suggestions");
+  if (!box || !box.classList.contains("active")) return;
+  const items = [...box.querySelectorAll(".suggest-item")];
+  if (!items.length) return;
+  let idx = items.findIndex((el) => el.classList.contains("hover"));
+  if (idx < 0) idx = dir > 0 ? 0 : items.length - 1;
+  else idx = (idx + dir + items.length) % items.length;
+  items.forEach((el, i) => el.classList.toggle("hover", i === idx));
+  items[idx].scrollIntoView({ block: "nearest" });
 }
 
 function getMyList() {
@@ -1701,12 +1995,25 @@ function toggleMyList(item) {
       desc: item.desc,
       rating: item.rating,
       year: item.year,
+      date: item.date || "",
+      releaseStatus: item.releaseStatus || "",
       genreIds: item.genreIds || [],
     });
     showToast("Added to My List");
   }
   localStorage.setItem("vk_mylist", JSON.stringify(ls.slice(0, 100)));
+  syncMyListCount();
 }
+
+function syncMyListCount() {
+  const count = getMyList().length;
+  document.querySelectorAll(".mylist-count").forEach((el) => {
+    el.textContent = String(count);
+    el.setAttribute("aria-label", `${count} ${count === 1 ? "item" : "items"}`);
+    el.classList.toggle("hidden", count === 0);
+  });
+}
+let mylistSort = "recent";
 function showMyList() {
   const ls = getMyList(),
     g = document.getElementById("mylist-grid"),
@@ -1717,7 +2024,16 @@ function showMyList() {
     return;
   }
   em.classList.add("hidden");
-  ls.forEach((i) => g.appendChild(makeCard(i)));
+  const sorted = [...ls];
+  if (mylistSort === "az")
+    sorted.sort((a, b) =>
+      String(a.title || "").localeCompare(String(b.title || "")),
+    );
+  else if (mylistSort === "rating")
+    sorted.sort(
+      (a, b) => (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0),
+    );
+  sorted.forEach((i) => g.appendChild(makeCard(i)));
 }
 
 function saveHistory(item) {
@@ -1732,6 +2048,7 @@ function saveHistory(item) {
     desc: item.desc,
     rating: item.rating,
     year: item.year,
+    date: item.date || "",
     genreIds: item.genreIds || [],
   });
   localStorage.setItem("vk_hist", JSON.stringify(h.slice(0, 30)));
@@ -1764,7 +2081,10 @@ function removeFromContinueWatching(item) {
 function buildContinueRow() {
   const old = document.querySelector('[data-rowid="continue"]');
   if (old) old.remove();
-  const h = JSON.parse(localStorage.getItem("vk_hist") || "[]");
+  const h = JSON.parse(localStorage.getItem("vk_hist") || "[]").filter((x) => {
+    const p = getProgress(x.id, x.type);
+    return p && ((p.currentTime || 0) > 0 || (p.progress || 0) > 0);
+  });
   if (!h.length) return;
   const main = document.getElementById("main-rows");
   main.insertBefore(
@@ -1964,6 +2284,8 @@ function wireListeners() {
           document
             .getElementById("navbar")
             .classList.toggle("solid", window.scrollY > 10);
+          const topBtn = document.getElementById("to-top");
+          if (topBtn) topBtn.classList.toggle("show", window.scrollY > 600);
           scrollTicking = false;
         });
         scrollTicking = true;
@@ -2024,6 +2346,62 @@ function wireListeners() {
     makeInteractive(mobileMenuBtn);
   }
 
+  document.querySelectorAll("#result-type button").forEach((btn) => {
+    btn.onclick = () => {
+      resultType = btn.dataset.type;
+      document
+        .querySelectorAll("#result-type button")
+        .forEach((b) => b.classList.toggle("active", b === btn));
+      renderResultGrid();
+    };
+  });
+  const resultSortSel = document.getElementById("result-sort");
+  if (resultSortSel)
+    resultSortSel.onchange = () => {
+      resultSort = resultSortSel.value;
+      if (
+        document.getElementById("search-page").classList.contains("active")
+      )
+        renderResultGrid();
+    };
+
+  const mylistSortSel = document.getElementById("mylist-sort");
+  if (mylistSortSel)
+    mylistSortSel.onchange = () => {
+      mylistSort = mylistSortSel.value;
+      if (currentPage === "mylist") showMyList();
+    };
+
+  const shuffleBtn = document.getElementById("shuffle-btn");
+  if (shuffleBtn) {
+    shuffleBtn.onclick = () => {
+      const go = (data) => {
+        const pool = (data.results || [])
+          .map((r) => norm(r))
+          .filter((i) => i && i.backdrop && !isUnreleased(i));
+        const list = pool.length
+          ? pool
+          : (data.results || []).map((r) => norm(r)).filter(Boolean);
+        if (!list.length) {
+          showToast("Nothing to shuffle right now");
+          return;
+        }
+        openDetail(list[Math.floor(Math.random() * list.length)]);
+      };
+      if (trendingData) go(trendingData);
+      else
+        tmdb("/trending/all/week")
+          .then(go)
+          .catch(() => showToast("Couldn't load a pick try again"));
+    };
+    makeInteractive(shuffleBtn);
+  }
+
+  const toTopBtn = document.getElementById("to-top");
+  if (toTopBtn)
+    toTopBtn.onclick = () =>
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
   const filterBtn = document.getElementById("filter-btn");
   const filterDrop = document.getElementById("filter-dropdown");
   if (filterBtn) {
@@ -2067,13 +2445,27 @@ function wireListeners() {
     clearTimeout(searchDebounce);
     clearTimeout(suggestDebounce);
     const val = si.value;
+    if (!val.trim()) {
+      hideSuggestions();
+      showRecentSearches();
+      return;
+    }
     suggestDebounce = setTimeout(() => fetchSuggestions(val), 250);
     searchDebounce = setTimeout(() => {
       hideSuggestions();
+      addRecentSearch(val);
       doSearch(val);
-    }, 3000);
+    }, 8000);
+  };
+  si.onfocus = () => {
+    if (!si.value.trim()) showRecentSearches();
   };
   si.onkeydown = (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      moveSuggestion(e.key === "ArrowDown" ? 1 : -1);
+      return;
+    }
     if (e.key === "Escape") {
       si.value = "";
       sw.classList.remove("open");
@@ -2083,9 +2475,19 @@ function wireListeners() {
     }
     if (e.key === "Enter") {
       e.preventDefault();
+      const box = document.getElementById("search-suggestions");
+      const hovered =
+        box && box.classList.contains("active")
+          ? box.querySelector(".suggest-item.hover")
+          : null;
+      if (hovered) {
+        hovered.click();
+        return;
+      }
       clearTimeout(searchDebounce);
       clearTimeout(suggestDebounce);
       hideSuggestions();
+      addRecentSearch(si.value);
       doSearch(si.value);
     }
   };
@@ -2135,8 +2537,47 @@ function wireListeners() {
   }
 
   document.onkeydown = (e) => {
+    const active = document.activeElement;
+    const typing =
+      active &&
+      (active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.tagName === "SELECT" ||
+        active.isContentEditable);
+
+    if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      const wrap = document.getElementById("search-wrapper");
+      const input = document.getElementById("search-input");
+      wrap.classList.add("open");
+      setTimeout(() => {
+        input.focus();
+        if (!input.value.trim()) showRecentSearches();
+      }, 30);
+      return;
+    }
+    if (e.key === "/" && !typing) {
+      e.preventDefault();
+      const wrap = document.getElementById("search-wrapper");
+      const input = document.getElementById("search-input");
+      wrap.classList.add("open");
+      setTimeout(() => {
+        input.focus();
+        if (!input.value.trim()) showRecentSearches();
+      }, 30);
+      return;
+    }
+
     if (e.key !== "Escape") return;
-    if (document.getElementById("player-overlay").classList.contains("active"))
+    const trailerOverlay = document.getElementById("trailer-overlay");
+    const legalOverlay = document.getElementById("legal-overlay");
+    if (trailerOverlay && trailerOverlay.classList.contains("active"))
+      closeTrailer();
+    else if (legalOverlay && legalOverlay.classList.contains("active"))
+      closeLegalModal();
+    else if (
+      document.getElementById("player-overlay").classList.contains("active")
+    )
       closePlayer();
     else if (
       document.getElementById("detail-overlay").classList.contains("active")
@@ -2159,18 +2600,38 @@ function wireListeners() {
       ev.origin === "https://www.vidlink.pro" ||
       ev.origin === "https://vidy.st" ||
       ev.origin === "https://www.vidy.st" ||
-      ev.origin === "https://vidsrc.sbs" ||
-      ev.origin === "https://www.vidsrc.sbs";
+      ev.origin === "https://vidsrc.ru" ||
+      ev.origin === "https://www.vidsrc.ru";
     if (!trustedPlayerOrigin) return;
 
     try {
       const msg = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data;
       if (!msg || typeof msg !== "object") return;
 
-      // Handle MEDIA_DATA (from Vidy or VidLink)
+      // Handle MEDIA_DATA (from Vidy, VidLink or VidSrc)
       if (msg.type === "MEDIA_DATA" && msg.data) {
         const hist = typeof msg.data === "string" ? JSON.parse(msg.data) : msg.data;
         if (hist) {
+          // vidsrc.ru sends { id, type: 'movie'|'tv', title, progress: { watched, duration } }
+          if (
+            hist.id &&
+            !hist.mediaType &&
+            (hist.type === "movie" || hist.type === "tv")
+          ) {
+            const p = hist.progress || {};
+            const watched = Number(p.watched) || 0;
+            const dur = Number(p.duration) || 0;
+            saveProgress({
+              id: String(hist.id),
+              mediaType: hist.type,
+              season: (nowPlaying && nowPlaying.season) || null,
+              episode: (nowPlaying && nowPlaying.episode) || null,
+              currentTime: watched,
+              duration: dur,
+              progress: dur > 0 ? Math.min(100, (watched / dur) * 100) : 0,
+            });
+            return;
+          }
           if (hist.id && hist.mediaType) {
             saveProgress(hist);
           } else if (nowPlaying && hist[nowPlaying.id]) {
@@ -2259,6 +2720,9 @@ function wireListeners() {
   wireSettingsActions();
 
   document.addEventListener("click", (e) => {
+    const searchWrap = document.getElementById("search-wrapper");
+    if (searchWrap && !searchWrap.contains(e.target)) hideSuggestions();
+
     if (
       filterDrop.classList.contains("open") &&
       !filterDrop.contains(e.target) &&
@@ -2330,7 +2794,7 @@ function settingsConfirm(btn, action) {
 }
 
 function wireNotifActions() {
-  const VERS = "v1.1.0";
+  const VERS = "v1.1.1";
   const btn = document.getElementById("notif-btn");
   const drop = document.getElementById("notification-dropdown");
   const dot = document.getElementById("notif-dot");
@@ -2387,6 +2851,8 @@ function wireSettingsActions() {
     e.stopPropagation();
     settingsConfirm(e.currentTarget, () => {
       localStorage.removeItem("vk_mylist");
+      syncMyListCount();
+      if (currentPage === "mylist") showMyList();
       showToast("My List cleared");
     });
   };
@@ -2409,7 +2875,7 @@ function wireSettingsActions() {
     const dd = document.getElementById("account-dropdown");
     dd.classList.remove("open");
     document.getElementById("nav-avatar").classList.remove("open");
-    showToast("Dert v1.0.0 — Free movie streaming powered by TMDB, VidLink, Vidy & VidSrc");
+    showToast("Dert v1.1.1  movie streaming powered by TMDB, VidLink, Vidy & VidSrc");
   };
 
   document.getElementById("settings-sync").onclick = (e) => {
@@ -2468,6 +2934,79 @@ function closeSyncModal() {
   }
 }
 
+function openTrailer(key) {
+  const ov = document.getElementById("trailer-overlay");
+  const frame = document.getElementById("trailer-frame");
+  if (!ov || !frame || !key) return;
+  const trailerUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(key)}`;
+  if (location.protocol === "file:") {
+    window.open(trailerUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+  frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(
+    key,
+  )}?autoplay=1&rel=0" title="Trailer" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  ov.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+
+function closeTrailer() {
+  const ov = document.getElementById("trailer-overlay");
+  const frame = document.getElementById("trailer-frame");
+  if (!ov) return;
+  ov.classList.remove("active");
+  if (frame) frame.innerHTML = "";
+  document.body.style.overflow = document
+    .getElementById("detail-overlay")
+    .classList.contains("active")
+    ? "hidden"
+    : "";
+}
+
+(function wireTrailerModal() {
+  const ov = document.getElementById("trailer-overlay");
+  const closeBtn = document.getElementById("trailer-close");
+  if (!ov || !closeBtn) return;
+  closeBtn.onclick = closeTrailer;
+  ov.onclick = (e) => {
+    if (e.target === e.currentTarget) closeTrailer();
+  };
+})();
+
+function openLegalModal() {
+  const ov = document.getElementById("legal-overlay");
+  if (!ov) return;
+  ov.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLegalModal() {
+  const ov = document.getElementById("legal-overlay");
+  if (!ov) return;
+  ov.classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+(function wireLegalModal() {
+  const ov = document.getElementById("legal-overlay");
+  const openBtn = document.getElementById("legal-open");
+  if (!ov || !openBtn) return;
+  openBtn.onclick = openLegalModal;
+  document.getElementById("legal-close").onclick = closeLegalModal;
+  document.getElementById("legal-accept").onclick = closeLegalModal;
+  ov.onclick = (e) => {
+    if (e.target === e.currentTarget) closeLegalModal();
+  };
+  const menuItem = document.getElementById("settings-legal");
+  if (menuItem)
+    menuItem.onclick = (e) => {
+      e.stopPropagation();
+      document.getElementById("account-dropdown").classList.remove("open");
+      document.getElementById("nav-avatar").classList.remove("open");
+      openLegalModal();
+    };
+})();
+
 function switchSyncTab(tab) {
   document
     .querySelectorAll(".sync-tab")
@@ -2500,6 +3039,171 @@ function getSyncData() {
     }
   }
   return data;
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isOptionalText(value, maxLength) {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === "string" && value.length <= maxLength)
+  );
+}
+
+function isTmdbImage(value) {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return (
+      url.origin === "https://image.tmdb.org" &&
+      url.pathname.startsWith("/t/p/")
+    );
+  } catch (_) {
+    return false;
+  }
+}
+
+function isSyncMediaItem(value) {
+  if (!isRecord(value)) return false;
+  const fields = new Set([
+    "id",
+    "title",
+    "type",
+    "poster",
+    "backdrop",
+    "desc",
+    "rating",
+    "year",
+    "date",
+    "releaseStatus",
+    "genreIds",
+    "ratingChoice",
+  ]);
+  if (Object.keys(value).some((key) => !fields.has(key))) return false;
+  if (
+    !/^\d+$/.test(String(value.id || "")) ||
+    typeof value.title !== "string" ||
+    value.title.length > 300 ||
+    !["movie", "tv"].includes(value.type) ||
+    !isTmdbImage(value.poster) ||
+    !isTmdbImage(value.backdrop) ||
+    !isOptionalText(value.desc, 5000) ||
+    !isOptionalText(value.year, 4) ||
+    !isOptionalText(value.date, 10) ||
+    !isOptionalText(value.releaseStatus, 40)
+  )
+    return false;
+  if (
+    value.rating !== undefined &&
+    value.rating !== null &&
+    !(
+      (typeof value.rating === "string" || typeof value.rating === "number") &&
+      Number.isFinite(Number(value.rating)) &&
+      Number(value.rating) >= 0 &&
+      Number(value.rating) <= 10
+    )
+  )
+    return false;
+  if (
+    value.genreIds !== undefined &&
+    (!Array.isArray(value.genreIds) ||
+      value.genreIds.length > 30 ||
+      value.genreIds.some(
+        (id) => !Number.isInteger(id) || id < 0,
+      ))
+  )
+    return false;
+  return (
+    value.ratingChoice === undefined ||
+    ["dislike", "like", "love"].includes(value.ratingChoice)
+  );
+}
+
+function isSyncProgress(key, value) {
+  const match = key.match(/^vk_p_(movie|tv)_(\d+)(?:_s(\d+)_e(\d+))?$/);
+  if (!match || !isRecord(value)) return false;
+  const fields = new Set([
+    "id",
+    "mediaType",
+    "currentTime",
+    "duration",
+    "progress",
+    "season",
+    "episode",
+    "updatedAt",
+  ]);
+  if (
+    Object.keys(value).some((field) => !fields.has(field)) ||
+    String(value.id) !== match[2] ||
+    value.mediaType !== match[1]
+  )
+    return false;
+  const numbers = [value.currentTime, value.duration, value.progress].map(
+    Number,
+  );
+  if (
+    numbers.some((number) => !Number.isFinite(number) || number < 0) ||
+    numbers[2] > 100
+  )
+    return false;
+  if (
+    value.updatedAt !== undefined &&
+    !Number.isFinite(Number(value.updatedAt))
+  )
+    return false;
+  if (match[3]) {
+    return (
+      match[1] === "tv" &&
+      Number(match[3]) > 0 &&
+      Number(match[4]) > 0 &&
+      Number(value.season) === Number(match[3]) &&
+      Number(value.episode) === Number(match[4])
+    );
+  }
+  if (value.season != null || value.episode != null) {
+    return (
+      match[1] === "tv" &&
+      Number(value.season) > 0 &&
+      Number(value.episode) > 0
+    );
+  }
+  return true;
+}
+
+function isValidSyncData(parsed) {
+  if (
+    !isRecord(parsed) ||
+    parsed.v !== 1 ||
+    !Number.isFinite(parsed.t) ||
+    !isRecord(parsed.d)
+  )
+    return false;
+  const entries = Object.entries(parsed.d);
+  if (!entries.length || entries.length > 5000) return false;
+  let progressCount = 0;
+  return entries.every(([key, value]) => {
+    if (key === "vk_hist")
+      return (
+        Array.isArray(value) &&
+        value.length <= 30 &&
+        value.every(isSyncMediaItem)
+      );
+    if (key === "vk_mylist" || key === "vk_likes")
+      return (
+        Array.isArray(value) &&
+        value.length <= 100 &&
+        value.every(isSyncMediaItem)
+      );
+    if (key.startsWith("vk_p_")) {
+      progressCount++;
+      return progressCount <= 5000 && isSyncProgress(key, value);
+    }
+    return false;
+  });
 }
 
 async function generateSyncCode() {
@@ -2627,22 +3331,19 @@ async function importSyncCode() {
     if (!r.ok) throw new Error(result.error || "Sync failed");
 
     const parsed = JSON.parse(result.data);
-    if (!parsed.d || typeof parsed.d !== "object")
-      throw new Error("Invalid data");
+    if (!isValidSyncData(parsed))
+      throw new Error("Invalid or unsupported sync data");
 
-    let count = 0;
-    Object.entries(parsed.d).forEach(([key, val]) => {
-      if (key.startsWith("vk_")) {
-        localStorage.setItem(
-          key,
-          typeof val === "string" ? val : JSON.stringify(val),
-        );
-        count++;
-      }
+    const entries = Object.entries(parsed.d);
+    entries.forEach(([key, value]) => {
+      localStorage.setItem(key, JSON.stringify(value));
     });
 
-    status.textContent = `Synced ${count} item${count > 1 ? "s" : ""} successfully!`;
+    status.textContent =
+      `Synced ${entries.length} item${entries.length > 1 ? "s" : ""} successfully!`;
     status.className = "sync-status success";
+    syncMyListCount();
+    if (currentPage === "mylist") showMyList();
     showToast("Data synced successfully!");
     setTimeout(() => {
       closeSyncModal();
